@@ -1,0 +1,8 @@
+const router = require('express').Router();
+const { register, login, getCurrent } = require('../controllers/user');
+const { verifyAccessToken } = require('../middlewares/verifyToken')
+
+router.post('/register', register);
+router.post('/login', login);
+router.get('/current', verifyAccessToken, getCurrent)rou
+module.exports = router;
