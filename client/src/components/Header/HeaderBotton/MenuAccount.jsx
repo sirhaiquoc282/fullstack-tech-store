@@ -15,6 +15,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { doLoguot } from "../../../store/features/AuthenSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
+
 export default function AccountMenu() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -29,10 +31,18 @@ export default function AccountMenu() {
     setAnchorEl(null);
     // navigate("profile")
   };
-  const handleLogout = () => {
+ const handleLogout = async () => {
+  try {
+    await   axios.get("http://localhost:5000/api/user/logout", { withCredentials: true });
     dispatch(doLoguot());
-    toast.success("Bạn đã đăng xuất tài khoản !");
-  };
+    toast.success("Đăng xuất thành công!");
+    navigate("/login");
+  } catch (error) {
+    toast.error("Đăng xuất thất bại!");
+    console.error(error);
+  }
+};
+
   return (
     <React.Fragment>
       <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>

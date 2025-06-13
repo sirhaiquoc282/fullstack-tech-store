@@ -5,22 +5,23 @@ const cartSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-        unique: true,
+        unique: true
     },
     products: [
         {
             productId: {
                 type: mongoose.Schema.Types.ObjectId,
-                ref: 'Product',
-                required: true,
+                ref: 'Product'
             },
             quantity: {
                 type: Number,
-                required: true,
-                default: 1,
+                default: 1
             },
-        },
+            price: Number
+        }
     ],
+    cartTotal: { type: Number, default: 0 },
+    totalAfterDiscount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Cart', cartSchema);

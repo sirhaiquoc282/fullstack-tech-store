@@ -1,113 +1,112 @@
-const User = require('../models/user');
+const User = require('../models/User');
 const asyncHandler = require('express-async-handler');
-const { generateAccessToken, generateRefreshToken } = require('../middlewares/jwt');
-const jwt = require('jsonwebtoken')
 
-const register = asyncHandler(async (req, res) => {
-    const { firstName, lastName, email, password } = req.body;
-
-    if (!firstName || !lastName || !email || !password) {
-        return res.status(400).json({
-            success: false,
-            message: 'All fields are required'
-        });
-    }
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-        throw new Error('User already exists');
-    }
-    const newUser = await User.create(req.body);
-    return res.status(200).json({
-        success: newUser ? true : false,
-        message: newUser ? 'User created successfully' : 'User creation failed',
-    })
-})
-
-
-
-const login = asyncHandler(async (req, res) => {
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({
-            success: false,
-            message: 'All fields are required'
-        });
-    }
-    const userExists = await User.findOne({ email });
-    if (!userExists) {
-        throw new Error('User does not exist');
-    }
-    const isPasswordMatched = await userExists.isPasswordMatched(password);
-    if (!isPasswordMatched) {
-        throw new Error('Invalid credentials');
-    }
-    const accessToken = generateAccessToken(userExists._id, userExists.role);
-    const refreshToken = generateRefreshToken(userExists._id);
-    await User.findByIdAndUpdate(userExists._id, { refreshToken }, { new: true });
-    res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000
-    });
-    const { password: _, ...userData } = userExists.toObject();
-    return res.status(200).json({
-        success: true,
-        accessToken,
-        user: userData
-    })
-});
-
-
-
-const getCurrent = asyncHandler(async (req, res) => {
+exports.getProfile = asyncHandler(async (req, res) => {
     const { _id } = req.user;
+
     const user = await User.findById(_id).select('-password');
-
     if (!user) {
-        return res.status(404).json({
-            success: false,
-            message: 'User not found'
-        });
+        res.status(404);
+        throw new Error('User not found');
     }
-
-    return res.status(200).json({
-        success: true,
-        result: user
-    });
+    res.status(200).json(user);
 });
 
-const refreshAccessToken = asyncHandler(async (req, res) => {
-    try {
-        const cookie = req.cookies;
-        if (!cookie || !cookie.refreshToken) {
-            return res.status(401).json({
-                success: false,
-                message: 'No refresh token found'
-            })
-        }
-        const refreshToken = cookie.refreshToken;
-        const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
-        const user = await User.findOne({
-            _id: decoded._id,
-            refreshToken
-        });
+exports.updateUser = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    const { firstName, lastName, email, mobile, address } = req.body;
 
-        if (!user) {
-            return res.status(403).json({ success: false, message: 'Refresh token invalid' });
-        }
-        const accessToken = generateAccessToken(user._id, user.role)
-        return res.status(200).json({
-            success: true,
-            accessToken
-        });
-    } catch (err) {
-        return res.status(403).json({ success: false, message: 'Token expired or invalid' });
+    const updatedUser = await User.findByIdAndUpdate(
+        _id,
+        {
+            firstName,
+            lastName,
+            email,
+            mobile,
+            address,
+        },
+        { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+        res.status(404);
+        throw new Error('User not found');
     }
+    res.status(200).json({ message: 'User updated successfully', user: updatedUser });
 });
 
-module.exports = {
-    register,
-    login,
-    getCurrent,
-    refreshAccessToken
-}
+exports.getAllUsers = asyncHandler(async (req, res) => {
+    const users = await User.find().select('-password');
+    res.status(200).json(users);
+});
+
+exports.getUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findById(id).select('-password');
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    res.status(200).json(user);
+});
+
+exports.deleteUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const deletedUser = await User.findByIdAndDelete(id);
+    if (!deletedUser) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    res.status(200).json({ message: 'User deleted successfully', user: deletedUser });
+});
+
+exports.blockUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findByIdAndUpdate(id, { isBlocked: true }, { new: true });
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    res.status(200).json({ message: 'User blocked', user });
+});
+
+exports.unblockUser = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const user = await User.findByIdAndUpdate(id, { isBlocked: false }, { new: true });
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    res.status(200).json({ message: 'User unblocked', user });
+});
+
+exports.getUserWishlist = asyncHandler(async (req, res) => {
+    const { id } = req.user;
+    const user = await User.findById(id).populate('wishlist');
+    if (!user) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    res.status(200).json(user.wishlist);
+});
+exports.saveAddress = asyncHandler(async (req, res) => {
+    const { _id } = req.user;
+    const { address } = req.body;
+
+    if (!Array.isArray(address) || address.some(addr => !addr.street || !addr.city || !addr.zipCode)) {
+        res.status(400);
+        throw new Error('Invalid address format. Each address must have street, city, and zipCode.');
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+        _id,
+        { address: address },
+        { new: true, runValidators: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+        res.status(404);
+        throw new Error('User not found');
+    }
+    res.status(200).json({ message: 'Address updated successfully', user: updatedUser });
+});

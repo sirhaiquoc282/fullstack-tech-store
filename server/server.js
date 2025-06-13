@@ -1,21 +1,42 @@
 const express = require('express');
-require('dotenv').config();
-const dbConnect = require('./config/dbconnect');
-const initRoutes = require('./routes');
+const bodyParser = require('body-parser');
+const dotenv = require('dotenv').config();
+const dbConnect = require('./config/dbConnect');
+const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const cookieParser = require('cookie-parser');
+const morgan = require('morgan');
+const cors = require('cors'); // <-- Thêm dòng này
 
 const app = express();
-app.use(cookieParser());
-const port = process.env.PORT || 3000;
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+const PORT = process.env.PORT || 5000;
+
 dbConnect();
-initRoutes(app);
 
-app.use('/', (req, res) => {
-    res.send('Server is running');
-})
+app.use(morgan('dev'));
+app.use(cors({ origin: 'http://localhost:5173', credentials: true })); // <-- Thêm dòng này
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(cookieParser());
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-})
+// Các route
+const userRoutes = require('./routes/user');
+const productRoutes = require('./routes/product');
+const categoryRoutes = require('./routes/category');
+const cartRoutes = require('./routes/cart');
+const orderRoutes = require('./routes/order');
+const reviewRoutes = require('./routes/review');
+
+app.use('/api/user', userRoutes);
+app.use('/api/product', productRoutes);
+app.use('/api/category', categoryRoutes);
+app.use('/api/cart', cartRoutes);
+app.use('/api/order', orderRoutes);
+app.use('/api/review', reviewRoutes);
+
+// Middleware xử lý lỗi
+app.use(notFound);
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});

@@ -3,7 +3,7 @@ const asyncHandler = require('express-async-handler')
 
 const verifyAccessToken = asyncHandler(async (req, res, next) => {
     const authHeader = req?.headers?.authorization;
-    if (authHeader?.startsWith('Bearer')) {
+    if (authHeader?.startsWith('Bearer ')) {
         const token = authHeader.split(' ')[1];
         try {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -22,9 +22,6 @@ const verifyAccessToken = asyncHandler(async (req, res, next) => {
         });
     }
 });
-
-a; ksdflkasdhf
-
 
 
 module.exports = {

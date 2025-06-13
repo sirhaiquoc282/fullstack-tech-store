@@ -23,7 +23,9 @@ const Contact = () => {
             placeholder="Bạn muốn chúng tôi trả lời gì nhỉ?"
             className="w-full border p-2 rounded h-32 outline-none focus:border-blue-500"
           ></textarea>
-          <button className="bg-blue-700 text-white py-2 px-4 rounded hover:bg-blue-900">
+          <button 
+            
+          className="bg-blue-700 text-white py-2 px-4 rounded hover:bg-blue-900">
             Send Message
           </button>
         </form>
