@@ -18,7 +18,9 @@ const authMiddleware = asyncHandler(async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        console.log("✅ Token decoded:", decoded);
         const user = await User.findById(decoded.id).select('-password'); // Exclude password
+        console.log("🔎 User from DB:", user);
         if (!user) {
             res.status(401);
             throw new Error('Not authorized, user not found');

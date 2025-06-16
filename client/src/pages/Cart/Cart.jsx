@@ -23,127 +23,156 @@ const Cart = () => {
     );
   }, [cartItems]);
 
-  const handleDeleteCart = (product) => {
-    dispatch(deleteCartAPI(product.id));
-    setSelectItems((prev) => prev.filter((i) => i.id !== product.id));
+  const handleDeleteCart = (item) => {
+    dispatch(deleteCartAPI(item.productId._id));
+    setSelectItems((prev) =>
+      prev.filter((i) => i.productId._id !== item.productId._id)
+    );
   };
 
-  const handleSelectItem = (item) => {
-    setSelectItems((prev) => {
-      const exists = prev.find((i) => i.id === item.id);
-      return exists ? prev.filter((i) => i.id !== item.id) : [...prev, item];
-    });
-  };
+ const handleSelectItem = (item) => {
+  const productId = item.productId._id;
+  setSelectItems((prev) => {
+    const exists = prev.find((i) => i.productId._id === productId);
+    return exists
+      ? prev.filter((i) => i.productId._id !== productId)
+      : [...prev, item];
+  });
+};
+
 
   const increaseQuantity = (item) => {
-    dispatch(updateCartAPI({ ...item, quantity: item.quantity + 1 }));
+    dispatch(
+      updateCartAPI({
+        productId: item.productId._id,
+        quantity: item.quantity + 1,
+      })
+    );
   };
 
   const decreaseQuantity = (item) => {
     if (item.quantity > 1) {
-      dispatch(updateCartAPI({ ...item, quantity: item.quantity - 1 }));
+      dispatch(
+        updateCartAPI({
+          productId: item.productId._id,
+          quantity: item.quantity - 1,
+        })
+      );
     }
   };
 
-  const totalSelectedPrice = selectItems.reduce(
-    (acc, item) => acc + item.price * item.quantity,
-    0
-  );
+  const totalSelectedPrice = selectItems.reduce((acc, item) => {
+    const finalPrice =
+      item.productId.price -
+      (item.productId.price * item.productId.discountPercentage) / 100;
+    return acc + finalPrice * item.quantity;
+  }, 0);
 
   if (!cartItems) return null;
 
   return (
-    <section className="containermb xl:container mt-12">
-      <div className="w-full overflow-x-auto">
-        <table className="w-full min-w-[700px] border-gray-300">
-          <thead className="bg-gray-100">
+    <section className="xl:container mx-auto mt-12 px-4">
+      <h2 className="text-2xl font-bold mb-6 text-center">🛒 Giỏ Hàng của bạn</h2>
+
+      <div className="w-full overflow-x-auto rounded-xl shadow">
+        <table className="w-full min-w-[700px] border border-gray-200 text-left bg-white">
+          <thead className="bg-gray-100 text-gray-600 font-semibold text-sm">
             <tr>
-              <th className="w-1/4 p-2 text-left">Product</th>
-              <th className="w-1/4 p-2 text-left">Price</th>
-              <th className="w-1/4 p-2 text-left">Quantity</th>
-              <th className="w-32 p-2">Total</th>
-              <th className="w-12 p-2"></th>
+              <th className="p-3">Product</th>
+              <th className="p-3">Price</th>
+              <th className="p-3">Quantity</th>
+              <th className="p-3">Total</th>
+              <th className="p-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            {cartItems.map((item, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="p-2 border-y border-gray-300">
-                  <div className="flex items-center gap-3 cursor-pointer">
-                    <img
-                      src={item.images}
-                      alt="product"
-                      className="w-14 h-14 object-contain"
-                    />
-                    <button onClick={() => navigate(`/product/${item.id}`)}>
-                      <span className="text-blue-700 font-medium line-clamp-2 max-w-[160px] hover:text-red-500 break-words">
-                        {item.description}
-                      </span>
-                    </button>
-                  </div>
-                </td>
-                <td className="p-2 border-y border-gray-300">
-                  <div className="text-gray-600 text-lg font-semibold">
-                    ${item.price}
-                  </div>
-                </td>
-                <td className="p-2 border-y border-gray-300 font-medium">
-                  <div className="flex gap-5 items-center">
-                    <button
-                      onClick={() => increaseQuantity(item)}
-                      className="border font-extrabold rounded-full p-2 w-8 h-8 bg-gray-200 hover:text-red-600"
-                    >
-                      +
-                    </button>
-                    <span className="font-extrabold text-red-600">
-                      {item.quantity}
+            {cartItems?.map((item, index) => {
+              const finalPrice =
+                item.productId?.price -
+                (item.productId?.price * item.productId?.discountPercentage) / 100;
+              return (
+                <tr key={index} className="hover:bg-gray-50 text-gray-700">
+                  <td className="p-3 border-y border-gray-200">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={item.productId?.thumbnail}
+                        alt="product"
+                        className="w-14 h-14 object-contain border rounded-lg"
+                      />
+                      <button
+                        onClick={() => navigate(`/product/${item.productId._id}`)}
+                        className="hover:text-red-600 max-w-[160px] font-medium text-blue-700 line-clamp-2"
+                      >
+                        {item.productId?.description}
+                      </button>
+                    </div>
+                  </td>
+                  <td className="p-3 border-y border-gray-200">
+                    <span className="text-red-600 font-semibold">
+                      {finalPrice.toLocaleString("vi-VN")} VNĐ
                     </span>
-                    <button
-                      onClick={() => decreaseQuantity(item)}
-                      className="border font-extrabold rounded-full p-2 w-8 h-8 bg-gray-200 hover:text-red-600"
-                    >
-                      -
-                    </button>
-                  </div>
-                </td>
-                <td className="p-2 border-y border-gray-300">
-                  <span className="text-gray-600 text-lg font-semibold">
-                    ${(item.price * item.quantity).toFixed(2)}
-                  </span>
-                </td>
-                <td className="p-2 border-y border-gray-300 text-center">
-                  <div className="flex gap-4 items-center justify-center">
-                    <input
-                      type="checkbox"
-                      checked={selectItems.some((i) => i.id === item.id)}
-                      onChange={() => handleSelectItem(item)}
-                    />
-                    <button
-                      onClick={() => handleDeleteCart(item)}
-                      className="hover:text-red-600"
-                    >
-                      X
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="p-3 border-y border-gray-200">
+                    <div className="flex gap-3 items-center">
+                      <button
+                        onClick={() => decreaseQuantity(item)}
+                        className="border px-2 py-1 rounded hover:bg-gray-200"
+                      >
+                        -
+                      </button>
+                      <span className="font-semibold">{item.quantity}</span>
+                      <button
+                        onClick={() => increaseQuantity(item)}
+                        className="border px-2 py-1 rounded hover:bg-gray-200"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </td>
+                  <td className="p-3 border-y border-gray-200">
+                    <span className="font-semibold text-red-600">
+                      {(finalPrice * item.quantity).toLocaleString("vi-VN")} VNĐ
+                    </span>
+                  </td>
+                  <td className="p-3 border-y border-gray-200 text-center">
+                    <div className="flex gap-3 items-center justify-center">
+                      <input
+                        type="checkbox"
+                        checked={selectItems.some((i) => i.productId._id === item.productId._id)}
+                        onChange={() => handleSelectItem(item)}
+                        className="w-5 h-5"
+                      />
+                      <button
+                        onClick={() => handleDeleteCart(item)}
+                        className="text-gray-500 hover:text-red-600 font-bold"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
 
       {/* Total + Checkout */}
-      <div className="grid grid-cols-1 md:flex md:justify-end items-baseline md:gap-20">
-        <span className="text-xl font-bold text-gray-600 mt-5">
-          Total: ${totalSelectedPrice.toFixed(2)}
+      <div className="flex flex-col md:flex-row justify-end items-center mt-6 gap-6">
+        <span className="text-xl font-bold text-gray-800">
+          Tổng cộng:{" "}
+          <span className="text-red-600">
+            {totalSelectedPrice.toLocaleString("vi-VN")} VNĐ
+          </span>
         </span>
         <button
           onClick={() =>
             navigate("/checkout", { state: { selectItems: selectItems } })
           }
-          className="bg-red-600 mt-5 text-white font-bold rounded-lg w-full py-3 md:w-1/5 hover:bg-blue-950 duration-100 hover:duration-500"
+          disabled={selectItems.length === 0}
+          className="bg-red-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Check out
+          Tiến hành thanh toán
         </button>
       </div>
     </section>
