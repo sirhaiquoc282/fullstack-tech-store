@@ -3,27 +3,38 @@ import axiosInstance from "../axiosInstance";
 
 // Các asyncThunk đã đúng
 export const fetchCartAPI = createAsyncThunk("cart/fetch", async () => {
-  const response = await axiosInstance.get("/cart");
-  return response.data;
+  const response = await axiosInstance.get("/cart/");
+  console.log("📦 Fetch Cart response:", response.data.products);
+  return response.data.products;
 });
 
 export const addToCart = createAsyncThunk("cart/add", async (product) => {
-  console.log(product);
   
-  const response = await axiosInstance.post("/cart", product);  
+
+  const response = await axiosInstance.post("/cart/", product);
   return response.data;
 });
 
-export const updateCartAPI = createAsyncThunk("cart/update", async (product) => {
-  const response = await axiosInstance.put("/cart", product);
-  return response.data;
-});
+export const updateCartAPI = createAsyncThunk(
+  "cart/update",
+  async ({ productId, quantity }) => {
+    const response = await axiosInstance.put("/cart", {
+      productId,
+      newQuantity: quantity,
+    });
+    console.log("updateCartAPI response:", response.data);
+    return response.data.cart.products;
+  }
+);
 
-export const deleteCartAPI = createAsyncThunk("cart/delete", async (productId) => {
-  await axiosInstance.delete(`/cart/${productId}`);
-  return productId;
-});
 
+export const deleteCartAPI = createAsyncThunk(
+  "cart/delete",
+  async (productId) => {
+    await axiosInstance.delete(`/cart/${productId}`);
+    return productId;
+  }
+);
 
 const cartSlice = createSlice({
   name: "cart",
@@ -58,18 +69,18 @@ const cartSlice = createSlice({
         }
       })
       .addCase(updateCartAPI.fulfilled, (state, action) => {
-        const updatedItem = action.payload;
-        state.cartItems = state.cartItems.map((item) =>
-          item.id === updatedItem.id ? updatedItem : item
-        );
-      })
+  const updatedCart = action.payload; // Đây là mảng products
+  state.cartItems = updatedCart;
+})
+
+
       .addCase(deleteCartAPI.fulfilled, (state, action) => {
+        const deletedProductId = action.payload;
         state.cartItems = state.cartItems.filter(
-          (item) => item.id !== action.payload
+          (item) => item.productId._id !== deletedProductId
         );
       });
   },
 });
-
 
 export default cartSlice.reducer;
