@@ -164,6 +164,8 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
         query = query.skip(skip).limit(limit);
 
+
+
         const products = await query;
 
         res.json({
@@ -202,8 +204,26 @@ const getProductById = asyncHandler(async (req, res) => {
     }
 });
 
-const addToWishlist = asyncHandler(async (req, res) => {
-    const { _id } = req.user;
+const getWishList = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
+    console.log("Fetching wishlist for user:", userId);
+    try {
+        const user = await User.findById(userId).populate('wishlist');
+
+        if (!user) {
+            res.status(404);
+            throw new Error("User not found.");
+        }
+        res.json({ products: user.wishlist });
+    } catch (error) {
+        res.status(500);
+        throw new Error("Failed to fetch wishlist: " + error.message);
+    }
+});
+
+
+const addProductToWishList = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
     const { productId } = req.body;
 
     if (!productId) {
@@ -212,7 +232,7 @@ const addToWishlist = asyncHandler(async (req, res) => {
     }
     validateMongoDbId(productId);
 
-    const user = await User.findById(_id);
+    const user = await User.findById(userId);
     if (!user) {
         res.status(404);
         throw new Error("User not found.");
@@ -234,6 +254,56 @@ const addToWishlist = asyncHandler(async (req, res) => {
         user.wishlist.push(productId);
         await user.save();
         res.json({ message: "Product added to wishlist", wishlist: user.wishlist.map(id => id.toString()) });
+    }
+});
+
+const removeProductFromWishList = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
+    const { productId } = req.params;
+
+    validateMongoDbId(productId);
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found.");
+    }
+
+    const initialProductCount = user.wishlist.length;
+    user.wishlist = user.wishlist.filter(
+        (item) => item.toString() !== productId
+    );
+
+    if (user.wishlist.length === initialProductCount) {
+        res.status(404);
+        throw new Error("Product not found in wishlist.");
+    }
+
+    await user.save();
+
+    const populatedUser = await User.findById(userId).populate('wishlist');
+    res.json({ message: "Product removed from wishlist successfully", wishlist: populatedUser.wishlist });
+});
+
+const clearWishList = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
+
+    try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            res.status(404);
+            throw new Error("User not found.");
+        }
+
+        user.wishlist = [];
+        await user.save();
+
+        res.json({ message: "Wishlist cleared successfully" });
+    } catch (error) {
+        res.status(500);
+        throw new Error("Failed to clear wishlist: " + error.message);
     }
 });
 
@@ -502,7 +572,10 @@ const uploadImages = asyncHandler(async (req, res) => {
 module.exports = {
     getAllProducts,
     getProductById,
-    addToWishlist,
+    getWishList,
+    addProductToWishList,
+    removeProductFromWishList,
+    clearWishList,
     addProductReview,
     updateProductReview,
     deleteProductReview,

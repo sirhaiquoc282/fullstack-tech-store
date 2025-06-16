@@ -2,7 +2,10 @@ const express = require('express');
 const {
     getAllProducts,
     getProductById,
-    addToWishlist,
+    getWishList,
+    addProductToWishList,
+    removeProductFromWishList,
+    clearWishList,
     addProductReview,
     updateProductReview,
     deleteProductReview,
@@ -16,8 +19,10 @@ const router = express.Router();
 router.get('/', getAllProducts);
 router.get('/:id', getProductById);
 
-router.put('/wishlist', authMiddleware, addToWishlist);
-
+router.get('/wishlist', authMiddleware, getWishList);
+router.put('/wishlist', authMiddleware, addProductToWishList);
+router.delete('/wishlist/:productId', authMiddleware, removeProductFromWishList);
+router.delete('/wishlist', authMiddleware, clearWishList);
 
 router.post('/:productId/reviews', authMiddleware, addProductReview);
 router.put('/:productId/reviews/:reviewId', authMiddleware, updateProductReview);
