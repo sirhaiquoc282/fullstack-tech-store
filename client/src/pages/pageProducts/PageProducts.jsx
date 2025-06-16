@@ -21,8 +21,6 @@ const PageProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get("search");
 
-  
-
   const [products, setProducts] = useState([]);
   const [totalProduct, setTotalProduct] = useState(0);
 
@@ -32,8 +30,6 @@ const PageProducts = () => {
 
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
   const reduxDispatch = useDispatch();
-
-
 
   const [filterProduct, dispatch] = useReducer(
     filterproductReducer,
@@ -47,6 +43,7 @@ const PageProducts = () => {
   }, [keyword]);
   const productsPerPage = filterProduct.limit;
   const totalPages = Math.ceil(totalProduct / productsPerPage);
+console.log(totalProduct, "totalPages");
 
   const handleChangeSort = (e) => {
     const [sortBy, order] = e.target.value.split(",");
@@ -64,6 +61,7 @@ const PageProducts = () => {
         skip: (page - 1) * productsPerPage,
       },
     });
+    
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -75,6 +73,7 @@ const PageProducts = () => {
         limit: filterProduct.limit,
         skip: filterProduct.skip,
         q: filterProduct.q,
+        page: filterProduct.page,
       };
 
       let res;
@@ -87,8 +86,10 @@ const PageProducts = () => {
       }
       if (res.status === 200) {
         setProducts(res.data.products);
+        console.log(res.data.products);       
         setTotalProduct(res.data.total);
       }
+      
     } catch (err) {
       console.error("Error fetching products:", err);
     }
@@ -102,7 +103,8 @@ const PageProducts = () => {
     if (isLogin) {
       reduxDispatch(
         addToCart({
-          ...product,
+          // ...product,
+          productId: String(product.id),
           quantity: 1,
         })
       );
@@ -120,8 +122,6 @@ const PageProducts = () => {
       navigate("/login");
     }
   };
-
-
 
   return (
     <section className="mt-8 lg:mt-10 xl:mt-12 container mx-auto px-4 grid grid-cols-1 lg:grid-cols-4 gap-5 items-start">
@@ -170,7 +170,12 @@ const PageProducts = () => {
                 <div className="absolute top-3 right-3 opacity-0 translate-x-1 group-hover:opacity-100 transition duration-500">
                   <ul className="flex flex-col gap-3 bg-white p-2 rounded-md shadow">
                     <li>
-                      <button onClick={() => handleAddToCart(item)}>
+                      <button
+                        onClick={() => {
+                          console.log(item);
+                          handleAddToCart(item);
+                        }}
+                      >
                         <i className="fas fa-shopping-bag text-gray-700 hover:text-red-600 hover:scale-110 cursor-pointer"></i>
                       </button>
                     </li>
@@ -192,14 +197,22 @@ const PageProducts = () => {
                   onClick={() => navigate(`/product/${item.id}`)}
                   className="cursor-pointer hover:text-red-600 transition-all"
                 >
-                  <h3 className="text-base font-semibold truncate">
-                    {item.tags?.[1] || "No Tag"}
+                  <h3 className="text-base font-semibold text-start line-clamp-1">
+                    {item.title}
                   </h3>
                 </button>
                 <p className="text-xs text-gray-600 line-clamp-2">
                   {item.description}
                 </p>
-                <span className="text-red-600 font-bold">${item.price}</span>
+                <span className="mr-4 text-red-600 text-lg font-semibold">
+                  {(
+                    item.price -
+                    (item.price * item.discountPercentage) / 100
+                  ).toLocaleString("vi-VN", {
+                    maximumFractionDigits: 0,
+                  })}{" "}
+                  VNĐ
+                </span>
               </div>
             </div>
           ))}

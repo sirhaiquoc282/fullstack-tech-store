@@ -12,7 +12,7 @@ import PersonAdd from "@mui/icons-material/PersonAdd";
 import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
 import { useDispatch, useSelector } from "react-redux";
-import { doLoguot } from "../../../store/features/AuthenSlice";
+import { doLogout } from "../../../store/features/AuthenSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axios from 'axios';
@@ -31,17 +31,30 @@ export default function AccountMenu() {
     setAnchorEl(null);
     // navigate("profile")
   };
- const handleLogout = async () => {
+const handleLogout = async () => {
   try {
-    await   axios.get("http://localhost:5000/api/user/logout", { withCredentials: true });
-    dispatch(doLoguot());
+    const token = localStorage.getItem("accessToken");
+
+    // const response = await axios.post(
+    //   "http://localhost:5000/api/auth/logout",
+    //   {}, // body rỗng
+    //   {
+    //     // headers: {
+    //     //   Authorization: `Bearer ${token}`, // Gửi access token ở đây
+    //     // },
+    //     withCredentials: true, // Chỉ bật nếu server cần cookie
+    //   }
+    // );
+
+    dispatch(doLogout());
     toast.success("Đăng xuất thành công!");
     navigate("/login");
   } catch (error) {
     toast.error("Đăng xuất thất bại!");
-    console.error(error);
+    console.error("Logout error:", error);
   }
 };
+
 
   return (
     <React.Fragment>

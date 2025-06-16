@@ -17,7 +17,7 @@ const TopSale = () => {
       </div>
       <hr className="mb-6" />
       {/* Product  */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 items-center gap-6">
         {/* Center  */}
         <div className="order-1 md:col-span-2 xl:order-2 ">
           <TopSaleCenter />

@@ -25,7 +25,7 @@ const ChangePass = () => {
       const token = localStorage.getItem("accessToken"); 
       console.log('Token gửi đi:', token)
       const response = await axios.put(
-        "http://localhost:5000/api/user/change-password",
+        "http://localhost:5000/api/auth/change-password",
         {
           oldPassword: form.passCurrent,
           newPassword: form.newPass,

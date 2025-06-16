@@ -74,7 +74,6 @@ const ProductDetailTop = () => {
     } else {
       navigate("/login");
     }
-   
   };
   const getAverageRating = () => {
     const reviews = dataDetail?.reviews || [];
@@ -95,8 +94,9 @@ const ProductDetailTop = () => {
             />
           </div>
           <div className="flex gap-4 xl:absolute xl:flex-col xl:gap-2 xl:top-2 xl:right-1">
-            {[dataDetail.thumbnail, ...(dataDetail.images || [])].map(
-              (image, idx) => (
+            {[dataDetail.thumbnail, ...(dataDetail.images || [])]
+              .slice(0, 5)
+              .map((image, idx) => (
                 <div
                   key={idx}
                   onClick={() => setMainImg(image)}
@@ -110,14 +110,13 @@ const ProductDetailTop = () => {
                     alt="thumb"
                   />
                 </div>
-              )
-            )}
+              ))}
           </div>
         </div>
         <div>
           <div>
             <p className="text-sm text-gray-500 s tracking-wider">
-              Categories: {dataDetail.category}
+              Categories: {dataDetail.tags[1].toUpperCase()}
             </p>
             <h4 className="text-2xl font-bold tracking-wider mt-3">
               {dataDetail.title}
@@ -157,11 +156,23 @@ const ProductDetailTop = () => {
           </div>
           <hr className="w-full border-gray-300 mt-2" />
           <div className="mt-3">
-            <span className="text-2xl font-extrabold text-red-600 mr-5">
-              ${dataDetail.price}
+            <span className="mr-4 text-red-600 text-2xl font-semibold">
+              {(
+                dataDetail.price -
+                (dataDetail.price * dataDetail.discountPercentage) / 100
+              ).toLocaleString("vi-VN", {
+                maximumFractionDigits: 0,
+              })}{" "}
+              VNĐ
             </span>
-            <span className="text-lg text-gray-600 line-through">
-              ${dataDetail.rating}
+
+            <span className="mr-4 text-gray-500 text-xl line-through font-semibold">
+              {(
+                dataDetail.price
+              ).toLocaleString("vi-VN", {
+                maximumFractionDigits: 0,
+              })}{" "}
+              VNĐ
             </span>
             <div className="flex items-center text-gray-600">
               <i className="fas fa-shipping-fast mr-5" />
@@ -170,12 +181,28 @@ const ProductDetailTop = () => {
           </div>
           <hr className="w-full border-gray-300 mt-2" />
           <div className="flex flex-col gap-1 mt-3">
-            {[...Array(5)].map((_, i) => (
-              <div key={i}>
-                <span className="mr-6 font-bold text-base">Brand</span>
-                <span className="text-base text-gray-700">Elite Gourmet</span>
-              </div>
-            ))}
+            <div>
+              <span className="mr-6 font-bold text-base">Brand</span>
+              <span className="text-base text-gray-700">
+                {dataDetail.brand}
+              </span>
+            </div>
+            <div>
+              <span className="mr-6 font-bold text-base">Trả hàng</span>
+              <span className="text-base text-gray-700">
+                {dataDetail.returnPolicy}
+              </span>
+            </div>
+            <div>
+              <span className="mr-6 font-bold text-base">Mã sản phẩm</span>
+              <span className="text-base text-gray-700">{dataDetail.sku}</span>
+            </div>
+            <div>
+              <span className="mr-6 font-bold text-base">Bảo hành</span>
+              <span className="text-base text-gray-700">
+                {dataDetail.warrantyInformation}
+              </span>
+            </div>
           </div>
           <hr className="w-full border-gray-300 mt-2" />
           <div className="mt-3 grid-cols-2 xl:grid xl:grid-cols-3 gap-10 items-center">
@@ -201,17 +228,6 @@ const ProductDetailTop = () => {
                   </button>
                 </div>
               </div>
-              <div className="flex gap-2 items-center">
-                <span className="font-bold text-gray-500">Color</span>
-                <select
-                  id="category"
-                  name="category"
-                  className="block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Blue</option>
-                  <option value="books">Red</option>
-                </select>
-              </div>
             </div>
             <button
               onClick={() => handleAddToCart(dataDetail)}
@@ -233,7 +249,7 @@ const ProductDetailTop = () => {
       </div>
 
       {/* DESCRIPTION */}
-      <div className="mt-12 border-[1px] border-gray-400 rounded-lg">
+      {/* <div className="mt-12 border-[1px] border-gray-400 rounded-lg">
         <h5 className="bg-gray-100 px-4 py-3 font-semibold text-2xl rounded-t-md text-gray-600">
           Descipttion
         </h5>
@@ -258,7 +274,7 @@ const ProductDetailTop = () => {
           </div>
           <span>Lorem ipsum dolor sit amet consectetur...</span>
         </div>
-      </div>
+      </div> */}
 
       {/* INFORMATION */}
       <div className="mt-4 border-[1px] border-gray-400 rounded-lg">

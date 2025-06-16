@@ -1,39 +1,40 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const dbConnect = require('./config/dbconnect');
 const dotenv = require('dotenv').config();
-const dbConnect = require('./config/dbConnect');
+const authRouter = require('./routes/auth');
+const productRouter = require('./routes/product');
+const categoryRouter = require('./routes/category');
+const uploadRouter = require('./routes/upload');
+const userRouter = require('./routes/user');
+const cartRouter = require('./routes/cart');
+const orderRouter = require('./routes/order');
 const { notFound, errorHandler } = require('./middlewares/errorHandler');
 const cookieParser = require('cookie-parser');
 const morgan = require('morgan');
-const cors = require('cors'); // <-- Thêm dòng này
+const cors = require('cors');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 dbConnect();
 
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+}));
 app.use(morgan('dev'));
-app.use(cors({ origin: 'http://localhost:5173', credentials: true })); // <-- Thêm dòng này
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
-// Các route
-const userRoutes = require('./routes/user');
-const productRoutes = require('./routes/product');
-const categoryRoutes = require('./routes/category');
-const cartRoutes = require('./routes/cart');
-const orderRoutes = require('./routes/order');
-const reviewRoutes = require('./routes/review');
+app.use('/api/auth', authRouter);
+app.use('/api/products', productRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/upload', uploadRouter);
+app.use('/api/users', userRouter);
+app.use('/api/cart', cartRouter);
+app.use('/api/orders', orderRouter);
 
-app.use('/api/user', userRoutes);
-app.use('/api/product', productRoutes);
-app.use('/api/category', categoryRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/order', orderRoutes);
-app.use('/api/review', reviewRoutes);
-
-// Middleware xử lý lỗi
 app.use(notFound);
 app.use(errorHandler);
 

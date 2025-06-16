@@ -58,7 +58,7 @@ function SamplePrevArrow(props) {
 }
 
 const ProductDetailRec = ({ data }) => {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const settings = {
     dots: true,
     infinite: true,
@@ -72,17 +72,16 @@ const ProductDetailRec = ({ data }) => {
       { breakpoint: 480, settings: { slidesToShow: 1 } },
     ],
   };
-    const dispatch = useDispatch();
-    const handleAddToCart = (item) => {
-      
-      dispatch(
-        addToCart({
-          ...item,
-          quantity: 1,
-        })
-      );
-      toast.success('Đã thêm sản phẩm vào giỏ hàng')
-    };
+  const dispatch = useDispatch();
+  const handleAddToCart = (item) => {
+    dispatch(
+      addToCart({
+        ...item,
+        quantity: 1,
+      })
+    );
+    toast.success("Đã thêm sản phẩm vào giỏ hàng");
+  };
   return (
     <div className="mt-8 lg:mt-10 xl:mt-12 mx-auto">
       <h2 className="font-bold text-2xl mb-1">Sản Phẩm Liên Quan</h2>
@@ -103,7 +102,7 @@ const ProductDetailRec = ({ data }) => {
                     className="absolute inset-0 w-full h-full object-contain p-5 transition-opacity duration-1000 opacity-100 group-hover:opacity-0"
                   />
                   <img
-                    src={item.images}
+                    src={item.images[2]}
                     alt="product-hover"
                     className="absolute inset-0 w-full h-full object-contain p-5 transition-opacity duration-1000 opacity-0 group-hover:opacity-100"
                   />
@@ -129,11 +128,24 @@ const ProductDetailRec = ({ data }) => {
 
               {/* Product Info */}
               <div className="mt-3">
-                <a onClick={()=>navigate(`/product/${item.id}`)} className="text-sm font-semibold truncate hover:text-red-600 cursor-pointer">{item.title}</a>
+                <a
+                  onClick={() => navigate(`/product/${item.id}`)}
+                  className="text-sm font-semibold truncate hover:text-red-600 cursor-pointer line-clamp-1"
+                >
+                  {item.title}
+                </a>
                 <p className="text-xs text-gray-600 line-clamp-2">
                   {item.description}
                 </p>
-                <span className="text-red-600 font-bold">${item.price}</span>
+                <span className="mr-4 text-red-600 text-lg font-semibold">
+                  {(
+                    item.price -
+                    (item.price * item.discountPercentage) / 100
+                  ).toLocaleString("vi-VN", {
+                    maximumFractionDigits: 0,
+                  })}{" "}
+                  VNĐ
+                </span>
               </div>
             </div>
           ))}

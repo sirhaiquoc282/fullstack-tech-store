@@ -1,216 +1,172 @@
 const User = require('../models/User');
 const asyncHandler = require('express-async-handler');
-const { generateAccessToken, generateRefreshToken } = require('../middlewares/jwt');
+const { generateToken, generateRefreshToken } = require('../middlewares/jwt');
+const validateMongoDbId = require('../utils/validateMongodbId');
 const sendEmail = require('../utils/nodemailer');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
-exports.register = asyncHandler(async (req, res) => {
-    const { firstName, lastName, email, mobile, password } = req.body;
-
-    if (!firstName || !lastName || !email || !mobile || !password) {
-        res.status(400);
-        throw new Error('Please enter all required fields.');
-    }
-
-    const findUser = await User.findOne({ email: email });
-    if (findUser) {
-        res.status(409);
-        throw new Error('User already exists with this email.');
-    }
-
-    const newUser = await User.create({ firstName, lastName, email, mobile, password });
-    res.status(201).json({
-        message: 'User registered successfully!',
-        user: {
-            id: newUser._id,
-            firstName: newUser.firstName,
-            lastName: newUser.lastName,
-            email: newUser.email,
-            mobile: newUser.mobile,
-            role: newUser.role
-        }
-    });
-});
-exports.login = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
+    const findUser = await User.findOne({ email });
 
-    if (!email || !password) {
-        res.status(400);
-        throw new Error('Email and password are required.');
+    if (!findUser) {
+        const newUser = await User.create(req.body);
+        res.json({
+            message: "User registered successfully",
+            user: {
+                id: newUser._id,
+                firstName: newUser.firstName,
+                lastName: newUser.lastName,
+                email: newUser.email,
+                mobile: newUser.mobile,
+                role: newUser.role,
+            }
+        });
+    } else {
+        res.status(409);
+        throw new Error("User already exists with this email.");
     }
-
-    const user = await User.findOne({ email: email });
-    if (!user) {
-        res.status(401);
-        throw new Error('Invalid credentials');
-    }
-
-    if (user.isBlocked) {
-        res.status(403);
-        throw new Error('Your account has been blocked.');
-    }
-
-    const isMatch = await user.isPasswordMatched(password);
-    if (!isMatch) {
-        res.status(401);
-        throw new Error('Invalid credentials');
-    }
-
-    const refreshToken = generateRefreshToken(user._id);
-    await User.findByIdAndUpdate(user._id, { refreshToken: refreshToken }, { new: true });
-    res.cookie('refreshToken', refreshToken, {
-        httpOnly: true,
-        maxAge: 72 * 60 * 60 * 1000,
-    });
-
-    const accessToken = generateAccessToken(user._id, user.email, user.role);
-
-    res.status(200).json({
-        message: 'Login successful!',
-        accessToken,
-        user: {
-            id: user._id,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            role: user.role
-        }
-    });
 });
 
-exports.handleRefreshToken = asyncHandler(async (req, res) => {
-    const cookie = req.cookies;
-    if (!cookie.refreshToken) {
+const loginUser = asyncHandler(async (req, res) => {
+    const { email, password } = req.body;
+    const findUser = await User.findOne({ email });
+    if (!findUser) {
         res.status(401);
-        throw new Error('No Refresh Token in Cookies');
+        throw new Error("Invalid credentials");
     }
 
+    if (await findUser.isPasswordMatched(password)) {
+        // Generate tokens
+        const accessToken = generateToken(findUser._id);
+        const refreshToken = generateRefreshToken(findUser._id);
+
+        findUser.refreshToken = refreshToken;
+        await findUser.save();
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            maxAge: 3 * 24 * 60 * 60 * 1000,
+            secure: process.env.NODE_ENV === 'production',
+        });
+
+        res.json({
+            message: "Login successful",
+            user: {
+                id: findUser._id,
+                firstName: findUser.firstName,
+                lastName: findUser.lastName,
+                email: findUser.email,
+                mobile: findUser.mobile,
+                role: findUser.role,
+                token: accessToken, // Access token
+            }
+        });
+    } else {
+        res.status(401);
+        throw new Error("Invalid credentials");
+    }
+});
+
+const handleRefreshToken = asyncHandler(async (req, res) => {
+    const cookie = req.cookies;
+    if (!cookie?.refreshToken) {
+        res.status(400);
+        throw new Error("No Refresh Token in Cookies");
+    }
     const refreshToken = cookie.refreshToken;
     const user = await User.findOne({ refreshToken });
-
     if (!user) {
         res.status(403);
-        throw new Error('Invalid Refresh Token or User not found');
+        throw new Error("No user found with this refresh token or token expired");
     }
-
     jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, (err, decoded) => {
         if (err || user.id !== decoded.id) {
             res.status(403);
-            throw new Error('There is something wrong with refresh token');
+            throw new Error("There is something wrong with refresh token");
         }
-        const accessToken = generateAccessToken(user._id, user.email, user.role);
-        res.json({ accessToken });
+        const accessToken = generateToken(user._id);
+        res.json({ token: accessToken });
     });
 });
 
-exports.logout = asyncHandler(async (req, res) => {
+const logout = asyncHandler(async (req, res) => {
     const cookie = req.cookies;
-    if (!cookie.refreshToken) {
-        res.status(204);
-        return;
+    if (!cookie?.refreshToken) {
+        res.status(400);
+        throw new Error("No Refresh Token in Cookies");
     }
     const refreshToken = cookie.refreshToken;
     const user = await User.findOne({ refreshToken });
-
-    if (!user) {
-        res.clearCookie('refreshToken', { httpOnly: true });
-        res.status(204);
-        return;
+    if (user) {
+        user.refreshToken = "";
+        await user.save();
     }
-
-    await User.findByIdAndUpdate(user._id, { refreshToken: "" }, { new: true });
-    res.clearCookie('refreshToken', { httpOnly: true });
-    res.status(200).json({ message: 'Logout successful' });
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+    });
+    res.json({ message: "Logged out successfully" });
 });
-exports.forgotPasswordToken = asyncHandler(async (req, res) => {
+
+const forgotPasswordToken = asyncHandler(async (req, res) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
-
     if (!user) {
         res.status(404);
-        throw new Error('User not found with this email.');
+        throw new Error("User not found with this email");
     }
-
     const resetToken = await user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
+    await user.save();
 
-    const resetURL = `${req.protocol}://${req.get('host')}/api/user/reset-password/${resetToken}`;
-    const message = `Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.
-        Vui lòng nhấp vào liên kết sau hoặc dán vào trình duyệt của bạn để hoàn tất quá trình:
-        ${resetURL}
-        Liên kết này sẽ hết hạn sau 15 phút.
-        Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này và mật khẩu của bạn sẽ vẫn không thay đổi.
-    `;
-
-    const html = `
-        <p>Bạn nhận được email này vì bạn (hoặc ai đó) đã yêu cầu đặt lại mật khẩu cho tài khoản của bạn.</p>
-        <p>Vui lòng nhấp vào liên kết sau để đặt lại mật khẩu của bạn:</p>
-        <a href="${resetURL}">Đặt lại mật khẩu</a>
-        <p>Liên kết này sẽ hết hạn sau 15 phút.</p>
-        <p>Nếu bạn không yêu cầu điều này, vui lòng bỏ qua email này và mật khẩu của bạn sẽ vẫn không thay đổi.</p>
-    `;
+    const resetURL = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
+    const message = `<p>Click <a href="${resetURL}">here</a> to reset your password. This link is valid for 15 minutes.</p>`;
 
     try {
         await sendEmail({
             email: user.email,
-            subject: 'Đặt lại mật khẩu cho Ecommerce App',
-            message: message,
-            html: html,
+            subject: "Password Reset Request",
+            html: message,
         });
-        res.json({ message: 'Password reset link sent to your email.' });
+        res.json({ message: "Password reset email sent successfully", token: resetToken }); // Return token for testing
     } catch (error) {
         user.passwordResetToken = undefined;
         user.passwordResetExpires = undefined;
-        await user.save({ validateBeforeSave: false });
+        await user.save();
         res.status(500);
-        throw new Error('Error sending email. Please try again later.');
+        throw new Error("Failed to send password reset email. Please try again later.");
     }
 });
 
-exports.resetPassword = asyncHandler(async (req, res) => {
+const resetPassword = asyncHandler(async (req, res) => {
     const { password } = req.body;
     const { token } = req.params;
-
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({
         passwordResetToken: hashedToken,
         passwordResetExpires: { $gt: Date.now() },
     });
-
     if (!user) {
         res.status(400);
-        throw new Error('Invalid or expired password reset token.');
+        throw new Error("Token expired or invalid. Please try again.");
     }
-
     user.password = password;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     user.passwordChangedAt = Date.now();
     await user.save();
-
-    res.status(200).json({ message: 'Password reset successful!' });
+    res.json({ message: "Password reset successfully!" });
 });
 
 
-exports.changePassword = asyncHandler(async (req, res) => {
-    const { oldPassword, newPassword } = req.body;
-    const user = await User.findById(req.user._id);
-
-    if (!user) {
-        res.status(404);
-        throw new Error('User not found.');
-    }
-
-    const isPasswordCorrect = await user.isPasswordMatched(oldPassword);
-    if (!isPasswordCorrect) {
-        res.status(400);
-        throw new Error('Old password is incorrect.');
-    }
-
-    user.password = newPassword;
-    user.passwordChangedAt = Date.now();
-    await user.save();
-
-    res.status(200).json({ message: 'Password changed successfully.' });
-});
+module.exports = {
+    registerUser,
+    loginUser,
+    handleRefreshToken,
+    logout,
+    forgotPasswordToken,
+    resetPassword,
+};

@@ -79,6 +79,8 @@ const ListProductDeal = () => {
       const res = await apiService.getProduct();
       if (res.status === 200) {
         setProduct(res.data.products);
+        console.log(res, "ress");
+        
       }
     } catch (err) {
       console.error("Error fetching products:", err);

@@ -1,65 +1,47 @@
-const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-exports.verifyToken = asyncHandler(async (req, res, next) => {
+const authMiddleware = asyncHandler(async (req, res, next) => {
     let token;
-    if (!req.headers.authorization || !req.headers.authorization.startsWith('Bearer')) {
-        res.status(401);
-        throw new Error('Not authorized: No token provided or invalid format.');
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
     }
-    token = req.headers.authorization.split(' ')[1];
+    if (!token && req.cookies && req.cookies.jwt) {
+        token = req.cookies.jwt;
+    }
+
+    if (!token) {
+        res.status(401);
+        throw new Error('Not authorized, no token provided');
+    }
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(decoded._id).select('-password');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password'); // Exclude password
         if (!user) {
             res.status(401);
-            throw new Error('Not authorized: User associated with this token not found.');
+            throw new Error('Not authorized, user not found');
         }
         if (user.isBlocked) {
             res.status(403);
-            throw new Error('Access denied: Your account has been blocked. Please contact support.');
+            throw new Error('User is blocked. Please contact support.');
         }
         req.user = user;
         next();
-
     } catch (error) {
         res.status(401);
-
-        if (error.name === 'TokenExpiredError') {
-            throw new Error('Not authorized: Token has expired. Please log in again.');
-        } else if (error.name === 'JsonWebTokenError') {
-            throw new Error('Not authorized: Invalid token. Please log in again.');
-        } else {
-            throw new Error('Not authorized: Token validation failed. ' + error.message);
-        }
+        throw new Error('Not authorized, token expired or invalid');
     }
 });
 
-exports.isAdmin = (req, res, next) => {
-    if (!req.user) {
-        res.status(401);
-        throw new Error('Authentication required for this action.');
-    }
-    if (req.user.role === 'admin') {
-        next();
-    } else {
+const isAdmin = asyncHandler(async (req, res, next) => {
+    if (!req.user || req.user.role !== 'admin') {
         res.status(403);
-        throw new Error('Access denied: You are not authorized as an administrator.');
+        throw new Error('Access denied. Admin role required.');
+    } else {
+        next();
     }
-};
+});
 
-exports.isUser = (req, res, next) => {
-    if (!req.user) {
-        res.status(401);
-        throw new Error('Authentication required for this action.');
-    }
-    if (req.user.role === 'user') {
-        next();
-    } else {
-        res.status(403);
-        throw new Error('Access denied: You are not authorized as a regular user.');
-    }
-};
+module.exports = { authMiddleware, isAdmin };

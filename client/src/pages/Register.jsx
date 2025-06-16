@@ -21,7 +21,9 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      const response = await axios.post('http://localhost:5000/api/user/register', formData)
+      const response = await axios.post('http://localhost:5000/api/auth/register', formData)
+     
+      
       setMessage(response.data.message)
       navigate("/login")
       toast.success("Đăng ký thành công!");

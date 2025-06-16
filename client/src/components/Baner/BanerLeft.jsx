@@ -11,6 +11,8 @@ const BanerLeft = () => {
       const res = await apiService.getListCategories();
       if (res.status === 200) {
         setListCategories(res.data);
+        console.log(res, "resssss");
+        
       }
     };
 
@@ -18,9 +20,10 @@ const BanerLeft = () => {
   }, []);
 
   const handleClick = (item) => {
-    setActiveCategory(item);
-
-    navigate("/shop", { state: { category: item } });
+    setActiveCategory(item.slug);
+    console.log(item, "itemmmm");
+    
+    navigate("/shop", { state: { category: item.id } });
   };
 
   return (
@@ -39,13 +42,13 @@ const BanerLeft = () => {
           <div key={index}>
             <button
               className={`w-full text-left px-4 py-2 flex items-center gap-5 transition ${
-                activeCategory === item
+                activeCategory === item.slug
                   ? "text-red-600 font-bold" // style khi active
                   : "hover:text-red-600 text-black" // style mặc định
               }`}
               onClick={() => handleClick(item)}
             >
-              <p>{item}</p>
+              <p>{item.slug}</p>
             </button>
             <hr className="mx-4 border" />
           </div>

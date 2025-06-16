@@ -3,119 +3,149 @@ const User = require('../models/User');
 const Product = require('../models/Product');
 const Cart = require('../models/Cart');
 const asyncHandler = require('express-async-handler');
+const validateMongoDbId = require('../utils/validateMongodbId');
 
-exports.createOrder = asyncHandler(async (req, res) => {
-    const { _id } = req.user;
-    const { shippingAddress, paymentIntent } = req.body;
+const createOrder = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
+    const { shippingAddress, paymentInfo } = req.body;
 
-    if (!shippingAddress || !paymentIntent) {
+    if (!shippingAddress || !paymentInfo || !paymentInfo.method || !paymentInfo.status) {
         res.status(400);
-        throw new Error('Shipping address and payment intent are required.');
+        throw new Error("Shipping address and payment information (method, status) are required.");
     }
 
-    const userCart = await Cart.findOne({ userId: _id });
+    const userCart = await Cart.findOne({ userId }).populate('products.productId');
     if (!userCart || userCart.products.length === 0) {
         res.status(400);
-        throw new Error('Your cart is empty.');
+        throw new Error("Cannot create order from an empty cart.");
     }
+
     const orderProducts = userCart.products.map(item => ({
-        productId: item.productId,
+        productId: item.productId._id,
         quantity: item.quantity,
         price: item.price,
     }));
 
-    const newOrder = await Order.create({
-        userId: _id,
-        products: orderProducts,
-        shippingAddress: shippingAddress,
-        paymentIntent: paymentIntent,
-        totalAmount: userCart.cartTotal,
-        totalAfterDiscount: userCart.totalAfterDiscount || userCart.cartTotal,
-        orderStatus: 'Pending',
-    });
-    for (let i = 0; i < orderProducts.length; i++) {
-        const product = await Product.findById(orderProducts[i].productId);
-        if (product) {
-            product.quantity -= orderProducts[i].quantity;
-            product.sold += orderProducts[i].quantity;
-            await product.save();
+    for (const item of userCart.products) {
+        const product = await Product.findById(item.productId._id);
+        if (!product || product.stock < item.quantity) {
+            res.status(400);
+            throw new Error(`Not enough stock for product: ${item.productId.title}. Available: ${product ? product.stock : 0}, Requested: ${item.quantity}`);
         }
     }
 
-    await Cart.findOneAndDelete({ userId: _id });
+    const newOrder = await Order.create({
+        userId,
+        products: orderProducts,
+        shippingAddress,
+        totalAmount: userCart.totalPrice,
+        paymentInfo,
+        orderStatus: 'Pending',
+    });
 
-    res.status(201).json({ message: 'Order created successfully', order: newOrder });
+    for (const item of userOrder.products) {
+        await Product.findByIdAndUpdate(item.productId, { $inc: { stock: -item.quantity } });
+    }
+
+    await Cart.findOneAndDelete({ userId });
+    await User.findByIdAndUpdate(userId, { $unset: { cart: 1 } });
+
+    res.status(201).json({ message: "Order created successfully", order: newOrder });
 });
 
-exports.getOrders = asyncHandler(async (req, res) => {
-    const { _id } = req.user;
-    const orders = await Order.find({ userId: _id })
-        .populate('products.productId')
-        .sort('-createdAt');
-
-    res.status(200).json(orders);
-});
-exports.getAllOrders = asyncHandler(async (req, res) => {
-    const orders = await Order.find()
-        .populate('userId', 'firstName lastName email mobile')
-        .populate('products.productId')
-        .sort('-createdAt');
-    res.status(200).json(orders);
+const getUserOrders = asyncHandler(async (req, res) => {
+    const { _id: userId } = req.user;
+    try {
+        const orders = await Order.find({ userId })
+            .populate('products.productId')
+            .sort('-createdAt');
+        res.json({ total: orders.length, orders });
+    } catch (error) {
+        res.status(500);
+        throw new Error("Failed to fetch user orders: " + error.message);
+    }
 });
 
-exports.updateOrderStatus = asyncHandler(async (req, res) => {
+const getAllOrders = asyncHandler(async (req, res) => {
+    try {
+        const orders = await Order.find()
+            .populate('userId', 'firstName lastName email mobile')
+            .populate('products.productId')
+            .sort('-createdAt');
+        res.json({ total: orders.length, orders });
+    } catch (error) {
+        res.status(500);
+        throw new Error("Failed to fetch all orders: " + error.message);
+    }
+});
+
+const getSingleOrder = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const { _id: userId, role } = req.user;
+    validateMongoDbId(id);
+
+    try {
+        const order = await Order.findById(id)
+            .populate('userId', 'firstName lastName email mobile')
+            .populate('products.productId');
+
+        if (!order) {
+            res.status(404);
+            throw new Error("Order not found.");
+        }
+
+        if (role !== 'admin' && order.userId._id.toString() !== userId.toString()) {
+            res.status(403);
+            throw new Error("You are not authorized to view this order.");
+        }
+
+        res.json({ order });
+    } catch (error) {
+        res.status(500);
+        throw new Error("Failed to fetch order: " + error.message);
+    }
+});
+
+
+const updateOrderStatus = asyncHandler(async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    validateMongoDbId(id);
+
     if (!status) {
         res.status(400);
-        throw new Error('Order status is required');
+        throw new Error("Order status is required.");
     }
-
-    const updatedOrder = await Order.findByIdAndUpdate(
-        id,
-        { orderStatus: status },
-        { new: true, runValidators: true }
-    );
-
-    if (!updatedOrder) {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-    res.status(200).json({ message: 'Order status updated', order: updatedOrder });
-});
-
-exports.cancelOrder = asyncHandler(async (req, res) => {
-    const { id } = req.params;
-    const user = req.user;
-
-    const order = await Order.findById(id);
-
-    if (!order) {
-        res.status(404);
-        throw new Error('Order not found');
-    }
-
-    if (order.userId.toString() !== user._id.toString() && user.role !== 'admin') {
-        res.status(403);
-        throw new Error('You are not authorized to cancel this order.');
-    }
-    if (order.orderStatus === 'Shipped' || order.orderStatus === 'Delivered') {
+    const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+    if (!validStatuses.includes(status)) {
         res.status(400);
-        throw new Error('Cannot cancel a shipped or delivered order.');
+        throw new Error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
     }
 
-    order.orderStatus = 'Cancelled';
-    await order.save();
+    try {
+        const updatedOrder = await Order.findByIdAndUpdate(
+            id,
+            { orderStatus: status, deliveredAt: status === 'Delivered' ? new Date() : undefined },
+            { new: true, runValidators: true }
+        ).populate('userId', 'firstName lastName email mobile')
+            .populate('products.productId');
 
-    for (let i = 0; i < order.products.length; i++) {
-        const product = await Product.findById(order.products[i].productId);
-        if (product) {
-            product.quantity += order.products[i].quantity;
-            product.sold -= order.products[i].quantity;
-            await product.save();
+        if (!updatedOrder) {
+            res.status(404);
+            throw new Error("Order not found.");
         }
+        res.json({ message: "Order status updated successfully", order: updatedOrder });
+    } catch (error) {
+        res.status(500);
+        throw new Error("Failed to update order status: " + error.message);
     }
-
-    res.status(200).json({ message: 'Order cancelled successfully', order });
 });
+
+module.exports = {
+    createOrder,
+    getUserOrders,
+    getAllOrders,
+    getSingleOrder,
+    updateOrderStatus,
+};

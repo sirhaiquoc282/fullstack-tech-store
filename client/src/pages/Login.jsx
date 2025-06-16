@@ -24,29 +24,29 @@ const Login = () => {
     }));
   };
 
-  const handleLogin = async () => {
+const handleLogin = async () => {
   try {
-    const res = await axios.post("http://localhost:5000/api/user/login", formData);
-    
-    const { accessToken, user } = res.data;
+    const res = await axios.post("http://localhost:5000/api/auth/login", formData);
+    const user = res.data.user;
+    const { token, email } = user;
 
-    if (!accessToken) {
+    if (!token) {
       toast.error("Không nhận được accessToken từ server");
       return;
     }
 
-    localStorage.setItem("accessToken", accessToken);
-    localStorage.setItem("username", user.firstName); 
-    
-    dispatch(doLogin({ email: user.email, role: user.role })); 
-    
+    localStorage.setItem("accessToken", token);
+    localStorage.setItem("username", user.firstName); // hoặc bất kỳ trường nào bạn muốn hiển thị
+
+    dispatch(doLogin({ email: user.email, role: user.role }));
+
     toast.success("Đăng nhập thành công!");
     navigate("/");
   } catch (err) {
     if (err.response?.data?.message) {
-      toast.error("email hoặc mật khẩu không đúng vui lòng nhập lại");
+      toast.error("Email hoặc mật khẩu không đúng. Vui lòng nhập lại.");
     } else {
-      toast.error("Đăng nhập thất bại hoặc lỗi kết nối server");
+      toast.error("Đăng nhập thất bại hoặc lỗi kết nối đến server.");
     }
   }
 };
@@ -55,7 +55,7 @@ const Login = () => {
     if (isLogin) {
       navigate("/");
     }
-  }, [isLogin]);
+  }, [isLogin, navigate]);
 
   return (
     <section className="">
@@ -92,7 +92,7 @@ const Login = () => {
                 <span className="text-sm">Bạn chưa có tài khoản?</span>
                 <Link
                   to="/register"
-                  className="text-md mt-5 mb-5 block hover:underline hover-text-blue"
+                  className="text-md mt-5 mb-5 block hover:underline hover:text-blue"
                 >
                   Đăng ký tại đây
                 </Link>

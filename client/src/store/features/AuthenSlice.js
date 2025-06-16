@@ -20,14 +20,14 @@ export const authenSlice = createSlice({
       state.username = username;
       state.isLogin = true;
     },
-    doLoguot: (state) => {
+    doLogout: (state) => { //  sửa lại tên cho đúng
       localStorage.removeItem("username");
-      localStorage.removeItem("accessToken")
+      localStorage.removeItem("accessToken");
       state.username = "";
       state.isLogin = false;
     }
   }
 });
 
-export const { doLogin, doLoguot } = authenSlice.actions;
+export const { doLogin, doLogout } = authenSlice.actions;
 export default authenSlice.reducer;

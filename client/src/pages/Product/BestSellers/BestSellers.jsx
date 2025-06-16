@@ -123,7 +123,9 @@ const BestSellers = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 ">
         {/* Card lớn: Camera */}
-        <div className="col-span-1 sm:col-span-2 relative hover:scale-105 duration-200 hover:duration-700 transition-all">
+        <div
+        onClick={() => navigate(`/product/${product[7].id}`)}
+        className="col-span-1 sm:col-span-2 relative hover:scale-105 duration-200 hover:duration-700 transition-all cursor-pointer">
           <div>
             <img
               className="w-full h-[300px] sm:h-[366px] object-contain rounded-xl"
@@ -132,15 +134,14 @@ const BestSellers = () => {
             />
           </div>
           <div className="w-40 sm:w-56 absolute top-20 sm:top-24 -right-5">
-            <img className="w-full h-full object-cover" src={product} alt="" />
+            <img className="w-full h-full object-cover" src={product[7]?.images[2]} alt="" />
           </div>
           <div className="text-black absolute top-28 sm:top-40 left-6 sm:left-14 max-w-[70%]">
             <h3 className="text-2xl sm:text-4xl font-bold tracking-widest">
-              Camera
+              {product[7]?.title}
             </h3>
-            <p className="mt-10 sm:mt-20 text-xs sm:text-sm">
-              Lorem ipsum, dolor sit amet consectetur adipisicing elit. Ullam,
-              iste aliquid. Aliquam cumque, beatae
+            <p className="mt-8 sm:mt-20 text-xs sm:text-sm">
+               {product[7]?.description}
             </p>
           </div>
         </div>
@@ -180,7 +181,15 @@ const BestSellers = () => {
                 <p className="text-xs text-gray-600 line-clamp-3">
                   {item.description}
                 </p>
-                <span className="text-red-600 font-bold">${item.price}</span>
+                <span className="mr-4 text-red-600 font-bold">
+                  {(
+                    item.price -
+                    (item.price * item.discountPercentage) / 100
+                  ).toLocaleString("vi-VN", {
+                    maximumFractionDigits: 0,
+                  })}{" "}
+                  VNĐ
+                </span>
               </div>
             </div>
           ))}

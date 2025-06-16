@@ -39,23 +39,41 @@ const BoxTopSale = ({ item }) => {
       <div>
         <img
           className="w-28 h-auto object-contain"
-          src={item.images}
+          src={item.thumbnail}
           alt={item.title}
         />
       </div>
       <div className="flex flex-col justify-between">
         <div className="flex flex-col w-full max-w-[300px]">
-          <p className="font-semibold text-sm text-gray-400">{item.category}</p>
           <button
             onClick={() => navigate(`/product/${item.id}`)}
             className="font-bold text-blue-700 hover:text-red-600 text-left cursor-pointer transition-all duration-150 hover:duration-700 line-clamp-2"
           >
             {item.title}
           </button>
-          <span className="text-xl font-bold text-red-600">${item.price}</span>
+          <p className="font-semibold text-sm text-gray-600 line-clamp-2">
+            {item.description}
+          </p>
+
+          <span className="text-xl font-bold text-red-600">
+            <span className="mr-4 text-red-600 text-2xl font-semibold">
+              {(
+                item.price -
+                (item.price * item.discountPercentage) / 100
+              ).toLocaleString("vi-VN", {
+                maximumFractionDigits: 0,
+              })}{" "}
+              VNĐ
+            </span>
+          </span>
           {item.discountPercentage && (
-            <span className="line-through text-base font-semibold text-gray-400">
-              ${(item.price * (1 + item.discountPercentage / 100)).toFixed(2)}
+            <span className="mr-4 text-gray-400 text-xl font-semibold line-through">
+              {(
+                item.price 
+              ).toLocaleString("vi-VN", {
+                maximumFractionDigits: 0,
+              })}{" "}
+              VNĐ
             </span>
           )}
         </div>
