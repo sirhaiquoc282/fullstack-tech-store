@@ -15,7 +15,8 @@ const BoxTopSale = ({ item }) => {
     if (isLogin) {
       dispatch(
         addToCart({
-          ...product,
+          // ...product,
+          productId: product.id,
           quantity: 1,
         })
       );
@@ -47,11 +48,11 @@ const BoxTopSale = ({ item }) => {
         <div className="flex flex-col w-full max-w-[300px]">
           <button
             onClick={() => navigate(`/product/${item.id}`)}
-            className="font-bold text-blue-700 hover:text-red-600 text-left cursor-pointer transition-all duration-150 hover:duration-700 line-clamp-2"
+            className="font-bold text-blue-700 hover:text-red-600 text-left cursor-pointer transition-all duration-150 hover:duration-700 line-clamp-1"
           >
             {item.title}
           </button>
-          <p className="font-semibold text-sm text-gray-600 line-clamp-2">
+          <p className="font-semibold text-sm text-gray-600 line-clamp-1">
             {item.description}
           </p>
 

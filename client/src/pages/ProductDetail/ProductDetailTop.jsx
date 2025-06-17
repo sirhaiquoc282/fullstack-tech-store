@@ -62,19 +62,19 @@ const ProductDetailTop = () => {
     }
   }, [category]);
   const dispatch = useDispatch();
-  const handleAddToCart = (dataDetail) => {
-    if (isLogin) {
-      dispatch(
-        addToCart({
-          ...dataDetail,
-          quantity,
-        })
-      );
-      toast.success("Đã thêm sản phẩm vào giỏ hàng");
-    } else {
-      navigate("/login");
-    }
-  };
+   const handleAddToCart = (product) => {
+     if (isLogin) {
+       dispatch(
+         addToCart({
+           productId: product.id,
+           quantity: quantity,
+         })
+       );
+       toast.success("Đã thêm sản phẩm vào giỏ hàng");
+     } else {
+       navigate("/login");
+     }
+   };
   const getAverageRating = () => {
     const reviews = dataDetail?.reviews || [];
     if (reviews.length === 0) return 0;

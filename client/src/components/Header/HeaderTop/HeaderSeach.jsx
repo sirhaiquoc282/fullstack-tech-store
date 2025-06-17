@@ -8,7 +8,7 @@ const HeaderSearch = () => {
   const handleSubmit = (e) => {
     e.preventDefault(); // Ngăn reload trang
     if (searchTerm.trim()) {
-      navigate(`/shop?search=${encodeURIComponent(searchTerm)}`);
+      navigate(`/shop?q=${encodeURIComponent(searchTerm)}`);
     }
   };
 

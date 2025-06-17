@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -6,6 +6,7 @@ import AccountMenu from "./MenuAccount";
 
 const HeaderAuthen = () => {
   const cartItems = useSelector((state) => state.cartSlice.cartItems);
+
   const wishItems = useSelector((state) => state.WishListSlice.wishItems);
   const { isLogin } = useSelector((state) => state.authenSlice);
   const navigate = useNavigate();
@@ -27,6 +28,8 @@ const HeaderAuthen = () => {
       navigate("/login");
     }
   };
+
+
 
   return (
     <div>

@@ -7,7 +7,7 @@ import { toast } from "react-toastify";
 
 import apiService from "../../service/apiService";
 import BanerLeft from "../../components/Baner/BanerLeft";
-import { addToCart } from "../../store/features/CartSlice";
+import { addToCart, fetchCartAPI } from "../../store/features/CartSlice";
 import { addWishList } from "../../store/features/WishListSlice";
 import { useSearchParams } from "react-router-dom";
 
@@ -19,18 +19,14 @@ import {
 
 const PageProducts = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const keyword = searchParams.get("search");
-
+  const keyword = searchParams.get("q");
   const [products, setProducts] = useState([]);
   const [totalProduct, setTotalProduct] = useState(0);
-
   const location = useLocation();
   const selectedCategory = location.state?.category;
   const navigate = useNavigate();
-
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
   const reduxDispatch = useDispatch();
-
   const [filterProduct, dispatch] = useReducer(
     filterproductReducer,
     initialState
@@ -97,6 +93,7 @@ console.log(totalProduct, "totalPages");
 
   useEffect(() => {
     fetchDataProduct();
+ 
   }, [selectedCategory, JSON.stringify(filterProduct)]);
 
   const handleAddToCart = (product) => {
@@ -104,7 +101,7 @@ console.log(totalProduct, "totalPages");
       reduxDispatch(
         addToCart({
           // ...product,
-          productId: String(product.id),
+          productId: product.id,
           quantity: 1,
         })
       );

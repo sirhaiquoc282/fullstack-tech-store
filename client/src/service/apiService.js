@@ -32,9 +32,10 @@ const apiService = {
     return await axios.get(API_LIST_CATEGORIES);
   },
 
-  getShearchProduct: async (params) => {
-    return await axios.get(`${API_PRODUCT}/search`, { params });
-  },
+ getShearchProduct: async (params) => {
+  return await axios.get(API_PRODUCT, { params });
+}
+
 };
 
 export default apiService;
