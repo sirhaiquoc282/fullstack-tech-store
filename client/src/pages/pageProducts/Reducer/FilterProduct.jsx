@@ -12,6 +12,7 @@ export const TYPE_ACITON = {
   CHANGE_SORT: "CHANGE_SORT",
   CHANGE_PAGE: "CHANGE_PAGE",
   CHANGE_SEARCH: "CHANGE_SEARCH",
+  
 };
 
 export const filterproductReducer = (state, action) => {

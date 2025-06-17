@@ -4,7 +4,7 @@ import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 import Skeleton from "@mui/material/Skeleton";
 import Box from "@mui/material/Box";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../store/features/CartSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
@@ -58,8 +58,7 @@ function SamplePrevArrow(props) {
 }
 
 const ProductDetailRec = ({ data }) => {
-  const navigate = useNavigate();
-  const settings = {
+   const settings = {
     dots: true,
     infinite: true,
     slidesToShow: 4,
@@ -72,15 +71,23 @@ const ProductDetailRec = ({ data }) => {
       { breakpoint: 480, settings: { slidesToShow: 1 } },
     ],
   };
+  const navigate = useNavigate();
+  const isLogin = useSelector((state) => state.authenSlice.isLogin);
+
+ 
   const dispatch = useDispatch();
-  const handleAddToCart = (item) => {
-    dispatch(
-      addToCart({
-        ...item,
-        quantity: 1,
-      })
-    );
-    toast.success("Đã thêm sản phẩm vào giỏ hàng");
+  const handleAddToCart = (product) => {
+    if (isLogin) {
+      dispatch(
+        addToCart({
+          productId: product.id,
+          quantity: 1,
+        })
+      );
+      toast.success("Đã thêm sản phẩm vào giỏ hàng");
+    } else {
+      navigate("/login");
+    }
   };
   return (
     <div className="mt-8 lg:mt-10 xl:mt-12 mx-auto">

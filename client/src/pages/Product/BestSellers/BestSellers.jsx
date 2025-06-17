@@ -76,19 +76,19 @@ const BestSellers = () => {
 
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
 
-  const handleAddToCart = (product) => {
-    if (isLogin) {
-      dispatch(
-        addToCart({
-          ...product,
-          quantity: 1,
-        })
-      );
-      toast.success("Đã thêm sản phẩm vào giỏ hàng");
-    } else {
-      navigate("/login");
-    }
-  };
+   const handleAddToCart = (product) => {
+     if (isLogin) {
+       dispatch(
+         addToCart({
+           productId: product.id,
+           quantity: 1,
+         })
+       );
+       toast.success("Đã thêm sản phẩm vào giỏ hàng");
+     } else {
+       navigate("/login");
+     }
+   };
 
   const handleAddToWishList = (product) => {
     if (isLogin) {
