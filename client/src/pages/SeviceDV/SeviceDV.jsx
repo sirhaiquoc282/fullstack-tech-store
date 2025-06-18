@@ -2,8 +2,19 @@ import React from 'react';
 
 const ServiceDV = () => {
   return (
-    <section className="mt-16  py-10 px-4 rounded-2xl">
-      <div className="flex xl:grid xl:grid-cols-5 gap-4 overflow-x-auto snap-x snap-mandatory">
+    <section className="mt-16 py-10 px-4">
+      <div className="
+        container mx-auto
+        flex
+        gap-6
+        overflow-x-auto
+        snap-x snap-mandatory
+        pb-4
+        px-2
+        md:gap-8
+        xl:grid xl:grid-cols-5 xl:gap-8
+        xl:overflow-x-hidden xl:snap-none
+      ">
         {[
           {
             icon: 'fas fa-truck',
@@ -33,12 +44,30 @@ const ServiceDV = () => {
         ].map((item, index) => (
           <div
             key={index}
-            className="flex min-w-[250px] xl:min-w-0 snap-start gap-4 border rounded-2xl p-6 items-center bg-white shadow hover:shadow-lg transition-all duration-300"
+            className="
+              flex flex-shrink-0
+              min-w-[280px]
+              snap-start
+              gap-4
+              rounded-xl              // Giảm bo góc từ 2xl xuống xl
+              p-5                      // Giảm padding
+              items-center
+              bg-white
+              shadow-sm                // Giảm độ đổ bóng
+              hover:shadow-md          // Hiệu ứng hover nhẹ hơn
+              transition-shadow duration-300 ease-in-out // Chỉ áp dụng transition cho shadow
+              cursor-pointer
+              group
+              xl:min-w-0
+              xl:col-span-1
+              border border-gray-100   // Thêm viền nhẹ thay cho bóng đậm
+            "
           >
-            <i className={`${item.icon} fa-lg text-blue-600`}></i>
+            <i className={`${item.icon} fa-2x text-blue-500 group-hover:text-blue-600 transition-colors duration-300`}></i>
+
             <div className="text-gray-700">
-              <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-              <p className="text-sm text-gray-500">{item.desc}</p>
+              <h3 className="font-semibold text-base mb-1 group-hover:text-gray-800">{item.title}</h3>
+              <p className="text-xs text-gray-500">{item.desc}</p>
             </div>
           </div>
         ))}

@@ -1,116 +1,184 @@
 import React from "react";
-import logo from '../../assets/img/logo.png'
+import logo from '../../assets/img/logo.png';
+
 const Footer = () => {
   return (
-    <div>
-      <footer className="bg-[#FAFAFA] mt-8 lg:mt-10 xl:mt-12">
-        <div className="grid grid-cols-1 xl:grid-cols-5 lg:grid-cols-2 container gap-5">
-          <div className="mt-8 lg:mt-10 xl:mt-12">
-            <div className="w-24">
-              <img src={logo} alt="logo" />
+    <footer className="
+      bg-gray-100
+      mt-8                 /* Giảm margin-top từ 16 xuống 8 */
+      py-8 lg:py-12        /* Giảm padding top/bottom */
+    ">
+      <div className="
+        container mx-auto
+        px-4
+      ">
+        {/* Phần trên của Footer */}
+        <div className="
+          grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5
+          gap-y-8 gap-x-6   /* Giảm khoảng cách giữa các cột */
+          pb-8              /* Giảm padding bottom */
+          border-b border-gray-300
+        ">
+          {/* Cột 1: Logo và Giới thiệu */}
+          <div className="
+            col-span-1 md:col-span-2 xl:col-span-1
+          ">
+            <div className="w-28"> {/* Giảm kích thước logo */}
+              <img src={logo} alt="QDA Logo" className="w-full h-auto" />
             </div>
-            <p className="mt-6 font-light text-base">
-              QDA chuyên máy ảnh laptop đồ điện tử...
+            <p className="
+              mt-4            /* Giảm margin-top */
+              text-gray-700
+              text-sm         /* Giảm kích thước chữ */
+              leading-relaxed
+            ">
+              QDA chuyên cung cấp các sản phẩm điện tử chất lượng cao như máy ảnh, laptop, điện thoại và nhiều hơn nữa.
             </p>
           </div>
 
-          <div className="mt-2 lg:mt-10 xl:mt-12">
-            <p className="font-semibold text-2xl">Contact</p>
-            <div className="mt-2 lg:mt-3 xl:mt-5">
-              <div className="flex gap-2 items-center">
-                <i className="fas fa-map-signs"></i>
-                <div className="w-px h-6 bg-gray-300 mr-7"></div>
-                <p>141 Chiến Thắng, Tân Triều, Thanh Trì, Hà Nội</p>
+          {/* Cột 2: Contact */}
+          <div className="col-span-1">
+            <h3 className="
+              font-bold text-lg /* Giảm kích thước tiêu đề */
+              text-gray-800
+              mb-3            /* Giảm margin-bottom */
+            ">Contact</h3>
+            <div className="space-y-3"> {/* Giảm khoảng cách */}
+              <div className="flex items-start gap-2"> {/* Giảm gap */}
+                <i className="fas fa-map-marker-alt text-blue-600 mt-1"></i>
+                <p className="text-gray-700 text-sm">141 Chiến Thắng, Tân Triều, Thanh Trì, Hà Nội</p>
               </div>
-            </div>
-            <div className="mt-2 lg:mt-3 xl:mt-5">
-              <div className="flex gap-2 items-center">
-                <i className="fas fa-phone"></i>
-                <div className="w-px h-6 bg-gray-300 mr-7"></div>
-                <p>1234567899</p>
+              <div className="flex items-center gap-2">
+                <i className="fas fa-phone text-blue-600"></i>
+                <p className="text-gray-700 text-sm">0123 456 789</p>
               </div>
-            </div>
-            <div className="mt-2 lg:mt-3 xl:mt-5">
-              <div className="flex gap-2 items-center">
-                <i className="fas fa-envelope-open"></i>
-                <div className="w-px h-6 bg-gray-300 mr-7"></div>
-                <p>qda@gmail.com</p>
+              <div className="flex items-center gap-2">
+                <i className="fas fa-envelope text-blue-600"></i>
+                <p className="text-gray-700 text-sm">contact@qda.com</p>
               </div>
             </div>
           </div>
 
-          <div className="mt-2 lg:mt-10 xl:mt-12 flex flex-col">
-            <p className="font-semibold text-2xl">Categories</p>
-            <a href="" className="mt-2 lg:mt-3 xl:mt-5">
-              Laptops & Computers
-            </a>
-            <a href="" className="mt-2 lg:mt-3 xl:mt-5">
-              Cameras & Photography
-            </a>
-            <a href="" className="mt-2 lg:mt-3 xl:mt-5">
-              Smart Phones
-            </a>
-            <a href="" className="mt-2 lg:mt-3 xl:mt-5">
-              Tablets & Ipad
-            </a>
+          {/* Cột 3: Categories */}
+          <div className="col-span-1">
+            <h3 className="
+              font-bold text-lg
+              text-gray-800
+              mb-3
+            ">Categories</h3>
+            <nav className="flex flex-col space-y-2"> {/* Giảm khoảng cách */}
+              <a href="#" className="text-gray-700 text-sm hover:text-blue-600 transition-colors">
+                Laptops & Computers
+              </a>
+              <a href="#" className="text-gray-700 text-sm hover:text-blue-600 transition-colors">
+                Cameras & Photography
+              </a>
+              <a href="#" className="text-gray-700 text-sm hover:text-blue-600 transition-colors">
+                Smart Phones
+              </a>
+              <a href="#" className="text-gray-700 text-sm hover:text-blue-600 transition-colors">
+                Tablets & iPad
+              </a>
+            </nav>
           </div>
 
-          <div className="mt-12 grid-cols-1 xl:grid-cols-2">
-            <h3 className="font-bold text-2xl">
-              10% cho đơn hàng đầu tiên
+          {/* Cột 4 & 5: Newsletter */}
+          <div className="col-span-1 md:col-span-2 xl:col-span-2">
+            <h3 className="
+              font-bold text-lg
+              text-gray-800
+              mb-2
+            ">
+              Giảm 10% cho đơn hàng đầu tiên!
             </h3>
-            <p className="mt-3">
-              Hãy là người đầu tiên biết về các ưu đãi, sản phẩm mới và các sản
-              phầm giảm giá
+            <p className="text-gray-700 text-sm mb-3"> {/* Giảm kích thước chữ */}
+              Hãy là người đầu tiên biết về các ưu đãi đặc biệt, sản phẩm mới và các chương trình giảm giá hấp dẫn.
             </p>
 
-            <div className="xl:flex gap-8 mt-2 lg:mt-3 xl:mt-5">
+            <div className="flex flex-col sm:flex-row gap-3"> {/* Giảm gap */}
               <input
-                className="outline-none border-[1px] border-black focus:border-red-700 focus:scale-105 duration-150 focus:duration-800 pl-3 px-36 py-3 rounded-full"
-                type="text"
-                placeholder="Enter your email address"
+                className="
+                  flex-grow
+                  outline-none
+                  border border-gray-300
+                  focus:border-blue-500
+                  py-2 px-4               /* Giảm padding */
+                  rounded-full
+                  text-sm                 /* Giảm kích thước chữ */
+                "
+                type="email"
+                placeholder="Nhập địa chỉ email của bạn"
               />
-              <button className="border-[1px] rounded-full py-3 px-32 mt-3 xl:mt-0 xl:py-3 xl:px-12 bg-red-700 text-white hover:bg-blue-800 duration-200 hover:duration-9000 hover:scale-110 font-semibold">
-                Subscribe
+              <button className="
+                shrink-0
+                bg-blue-600
+                text-white
+                font-semibold
+                py-2 px-4                 /* Giảm padding */
+                rounded-full
+                hover:bg-blue-700
+                text-sm                   /* Giảm kích thước chữ */
+              ">
+                Đăng ký
               </button>
             </div>
           </div>
         </div>
 
-        <hr className="mb-6 mt-3" />
-        <div className="container text-center mb-3">
-          <p>
-            QDA uy tín, nhiệt tình vì khách hàng{" "}
-            <i className="fas fa-heart" style={{ color: "#dd1d1d" }}></i>
+        {/* Phần dưới của Footer */}
+        <div className="
+          flex flex-col md:flex-row
+          items-center
+          justify-between
+          pt-5                      /* Giảm padding top */
+        ">
+          <p className="text-gray-600 text-xs mb-3 md:mb-0"> {/* Giảm kích thước chữ */}
+            &copy; {new Date().getFullYear()} QDA. Tất cả quyền được bảo lưu.{" "}
+            <i className="fas fa-heart text-red-500"></i>
           </p>
-          <div className="flex gap-6 justify-center mt-3">
+          <div className="flex gap-3"> {/* Giảm khoảng cách */}
             {/* Facebook */}
-            <a
-              href="#"
-              className="border border-black rounded-full w-10 h-10 flex items-center justify-center hover:bg-blue-500 hover:text-white transition"
-            >
+            <a href="#" className="
+              border border-gray-300
+              rounded-full
+              w-8 h-8              /* Giảm kích thước icon */
+              flex items-center justify-center
+              text-gray-600
+              hover:bg-blue-600 hover:text-white hover:border-blue-600
+              text-sm               /* Giảm kích thước icon */
+            ">
               <i className="fab fa-facebook-f"></i>
             </a>
 
             {/* TikTok */}
-            <a
-              href="#"
-              className="border border-black rounded-full w-10 h-10 flex items-center justify-center hover:bg-black hover:text-white transition"
-            >
+            <a href="#" className="
+              border border-gray-300
+              rounded-full
+              w-8 h-8
+              flex items-center justify-center
+              text-gray-600
+              hover:bg-black hover:text-white hover:border-black
+              text-sm
+            ">
               <i className="fab fa-tiktok"></i>
             </a>
 
             {/* Instagram */}
-            <a
-              href="#"
-              className="border border-black rounded-full w-10 h-10 flex items-center justify-center hover:bg-violet-600 hover:text-white transition"
-            >
+            <a href="#" className="
+              border border-gray-300
+              rounded-full
+              w-8 h-8
+              flex items-center justify-center
+              text-gray-600
+              hover:bg-fuchsia-600 hover:text-white hover:border-fuchsia-600
+              text-sm
+            ">
               <i className="fab fa-instagram"></i>
             </a>
           </div>
         </div>
-      </footer>
-    </div>
+      </div>
+    </footer>
   );
 };
 
