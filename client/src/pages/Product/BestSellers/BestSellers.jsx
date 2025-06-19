@@ -69,9 +69,9 @@ const BestSellers = () => {
     slidesToScroll: 1,
     nextArrow: <SampleNextArrow />,
     prevArrow: <SamplePrevArrow />,
-    autoplay: true, // Thêm hiệu ứng tự động chuyển
-    autoplaySpeed: 5000, // Tốc độ chuyển slide (5 giây)
-    speed: 800, // Tốc độ hiệu ứng chuyển
+    autoplay: true,
+    autoplaySpeed: 5000,
+    speed: 800,
     pauseOnHover: true,
     responsive: [
       {
@@ -103,7 +103,8 @@ const BestSellers = () => {
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const sliderRef = useRef(null); // Ref để kiểm soát slider
+  const [activeProduct, setActiveProduct] = useState(null);
+  const sliderRef = useRef(null);
 
   const handleAddToCart = (product) => {
     if (isLogin) {
@@ -202,15 +203,14 @@ const BestSellers = () => {
           <div
             onClick={() => navigate(`/product/${products[7].id}`)}
             className="col-span-1 sm:col-span-2 relative overflow-hidden rounded-xl group cursor-pointer
-              border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300"
+              border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300
+              bg-white" // Đổi màu nền thành trắng
           >
-            <div className="relative h-[366px] bg-gradient-to-br from-blue-50 to-indigo-50">
-              <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-5 transition-all duration-500"></div>
-
+            <div className="relative h-[366px] bg-white"> {/* Đổi màu nền thành trắng */}
               <div className="w-full h-full flex items-center justify-center">
-                <div className="w-56 h-56 bg-white/30 backdrop-blur-sm rounded-full absolute"></div>
+                <div className="w-56 h-56 bg-gray-50 rounded-full absolute"></div> {/* Màu nền nhẹ hơn */}
                 <img
-                  className="w-full h-full object-cover mix-blend-multiply"
+                  className="w-full h-full object-cover"
                   src={banner}
                   alt=""
                 />
@@ -245,22 +245,20 @@ const BestSellers = () => {
           <Slider {...settings} ref={sliderRef}>
             {products.slice(1, 7).map((item, idx) => (
               <div className="px-2" key={idx}>
-                <div className="relative border border-gray-100 rounded-xl overflow-hidden group bg-white 
-                  shadow-sm hover:shadow-md transition-all duration-300">
-
+                <div
+                  className="relative border border-gray-100 rounded-xl overflow-hidden 
+                    bg-white shadow-sm hover:shadow-md transition-all duration-300"
+                  onMouseEnter={() => setActiveProduct(item.id)}
+                  onMouseLeave={() => setActiveProduct(null)}
+                >
                   <div
                     onClick={() => navigate(`/product/${item.id}`)}
-                    className="w-full h-[265px] flex items-center justify-center cursor-pointer relative bg-gray-50"
+                    className="w-full h-[265px] flex items-center justify-center cursor-pointer relative bg-white"
                   >
                     <img
                       src={item.images[0]}
                       alt={item.title}
-                      className="w-full h-full object-contain p-5 transition-all duration-500 opacity-100 group-hover:opacity-0 absolute top-0 left-0"
-                    />
-                    <img
-                      src={item.thumbnail}
-                      alt={`${item.title}-hover`}
-                      className="w-full h-full object-contain p-5 transition-all duration-500 opacity-0 group-hover:opacity-100 absolute top-0 left-0"
+                      className="w-full h-full object-contain p-5 transition-all duration-500"
                     />
 
                     {/* Badge giảm giá */}
@@ -271,28 +269,79 @@ const BestSellers = () => {
                     )}
                   </div>
 
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <ul className="flex flex-col gap-3 bg-white p-2 rounded-lg shadow-lg">
-                      <li
-                        onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
-                        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                      >
-                        <i className="fas fa-shopping-bag text-gray-700 hover:text-blue-600 cursor-pointer"></i>
-                      </li>
-                      <li
-                        onClick={(e) => { e.stopPropagation(); handleAddToWishList(item); }}
-                        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                      >
-                        <i className="far fa-heart text-gray-700 hover:text-red-600 cursor-pointer"></i>
-                      </li>
-                      <li
-                        onClick={(e) => { e.stopPropagation(); navigate(`/product/${item.id}`); }}
-                        className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                      >
-                        <i className="far fa-eye text-gray-700 hover:text-green-600 cursor-pointer"></i>
-                      </li>
-                    </ul>
-                  </div>
+                  {/* Thanh chức năng chỉ hiển thị khi hover vào sản phẩm tương ứng */}
+                  {activeProduct === item.id && (
+                    <div className="absolute top-3 right-3 transition-opacity duration-300">
+                      <ul className="flex flex-col gap-3 bg-white p-2 rounded-lg shadow-lg">
+                        <li
+                          onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                          title="Thêm vào giỏ hàng"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-700 hover:text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                          </svg>
+                        </li>
+                        <li
+                          onClick={(e) => { e.stopPropagation(); handleAddToWishList(item); }}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                          title="Thêm vào yêu thích"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-700 hover:text-red-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                            />
+                          </svg>
+                        </li>
+                        <li
+                          onClick={(e) => { e.stopPropagation(); navigate(`/product/${item.id}`); }}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                          title="Xem chi tiết"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-700 hover:text-green-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
 
                   <div className="mt-3 px-4 pb-4">
                     <h3
@@ -327,8 +376,22 @@ const BestSellers = () => {
                         onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
                         className="bg-blue-100 hover:bg-blue-600 text-blue-600 hover:text-white 
                           w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                        title="Thêm vào giỏ hàng"
                       >
-                        <i className="fas fa-plus text-xs"></i>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
+                        </svg>
                       </button>
                     </div>
                   </div>

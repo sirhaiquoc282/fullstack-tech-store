@@ -4,12 +4,12 @@ import HeaderMenu from './HeaderMenu'
 
 const HeaderBotton = () => {
   return (
-    <div className="bg-[#b7b7b8] mt-5 py-4 xl:block hidden">
-            <div className="container flex justify-between items-center">
-             <HeaderMenu/>
-              <HeaderAuthen/>
-            </div>
-          </div>
+    <div className="bg-gray-100 py-4 mt-5 hidden xl:block"> {/* Màu nền nhẹ hơn, padding, ẩn trên mobile */}
+      <div className="container mx-auto flex justify-between items-center px-4"> {/* Căn giữa container */}
+        <HeaderMenu />
+        <HeaderAuthen />
+      </div>
+    </div>
   )
 }
 
