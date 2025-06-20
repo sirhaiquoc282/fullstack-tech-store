@@ -11,7 +11,6 @@ import Contact from "../pages/Contact/Contact";
 import ChangePass from "../pages/ChangePass";
 import Register from "../pages/Register";
 
-// Import các component cho profile người dùng
 import ProfileLayout from "../pages/Profile/ProfileLayout";
 import ProfileDashboard from "../pages/Profile/Dashboard";
 import ProfilePaymentMethods from "../pages/Profile/PaymentMethods";

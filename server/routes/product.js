@@ -13,7 +13,7 @@ const { authMiddleware, isAdmin } = require('../middlewares/authMiddleware');
 const router = express.Router();
 
 router.get('/', getAllProducts);
-router.get('/:productId', getProductById);
+router.get('/:id', getProductById);
 
 router.post('/:productId/reviews', authMiddleware, addProductReview);
 router.put('/:productId/reviews/:reviewId', authMiddleware, updateProductReview);
