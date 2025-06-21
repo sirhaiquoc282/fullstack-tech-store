@@ -58,7 +58,7 @@ function SamplePrevArrow(props) {
 }
 
 const ProductDetailRec = ({ data }) => {
-   const settings = {
+  const settings = {
     dots: true,
     infinite: true,
     slidesToShow: 4,
@@ -74,7 +74,7 @@ const ProductDetailRec = ({ data }) => {
   const navigate = useNavigate();
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
 
- 
+
   const dispatch = useDispatch();
   const handleAddToCart = (product) => {
     if (isLogin) {

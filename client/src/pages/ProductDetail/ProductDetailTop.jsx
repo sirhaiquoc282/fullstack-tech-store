@@ -62,19 +62,19 @@ const ProductDetailTop = () => {
     }
   }, [category]);
   const dispatch = useDispatch();
-   const handleAddToCart = (product) => {
-     if (isLogin) {
-       dispatch(
-         addToCart({
-           productId: product.id,
-           quantity: quantity,
-         })
-       );
-       toast.success("Đã thêm sản phẩm vào giỏ hàng");
-     } else {
-       navigate("/login");
-     }
-   };
+  const handleAddToCart = (product) => {
+    if (isLogin) {
+      dispatch(
+        addToCart({
+          productId: product.id,
+          quantity: quantity,
+        })
+      );
+      toast.success("Đã thêm sản phẩm vào giỏ hàng");
+    } else {
+      navigate("/login");
+    }
+  };
   const getAverageRating = () => {
     const reviews = dataDetail?.reviews || [];
     if (reviews.length === 0) return 0;
@@ -100,9 +100,8 @@ const ProductDetailTop = () => {
                 <div
                   key={idx}
                   onClick={() => setMainImg(image)}
-                  className={`w-14 border rounded-lg p-1 mb-2 cursor-pointer ${
-                    image === mainImg ? "border-red-500" : "border-gray-300"
-                  }`}
+                  className={`w-14 border rounded-lg p-1 mb-2 cursor-pointer ${image === mainImg ? "border-red-500" : "border-gray-300"
+                    }`}
                 >
                   <img
                     className="w-full h-full object-contain"
@@ -135,8 +134,8 @@ const ProductDetailTop = () => {
                         isFull
                           ? "fas fa-star"
                           : isHalf
-                          ? "fas fa-star-half-alt"
-                          : "far fa-star"
+                            ? "fas fa-star-half-alt"
+                            : "far fa-star"
                       }
                     />
                   );
@@ -334,8 +333,8 @@ const ProductDetailTop = () => {
                         isFull
                           ? "fas fa-star"
                           : isHalf
-                          ? "fas fa-star-half-alt"
-                          : "far fa-star"
+                            ? "fas fa-star-half-alt"
+                            : "far fa-star"
                       }
                     />
                   );
@@ -400,9 +399,8 @@ const ProductDetailTop = () => {
                       {[...Array(5)].map((_, starIndex) => (
                         <i
                           key={starIndex}
-                          className={`fa-star ${
-                            starIndex < item.rating ? "fas" : "far"
-                          }`}
+                          className={`fa-star ${starIndex < item.rating ? "fas" : "far"
+                            }`}
                         />
                       ))}
                     </div>

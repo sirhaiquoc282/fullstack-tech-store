@@ -54,13 +54,31 @@ const createOrder = asyncHandler(async (req, res) => {
 });
 
 const getUserOrders = asyncHandler(async (req, res) => {
-    const { _id: userId } = req.user;
+    const { _id: userId } = req.user; // Lấy ID người dùng từ req.user (từ authMiddleware)
     try {
         const orders = await Order.find({ userId })
-            .populate('products.productId')
-            .sort('-createdAt');
-        res.json({ total: orders.length, orders });
+            // Populate chi tiết sản phẩm (title, thumbnail) từ productId
+            .populate('products.productId', 'title price thumbnail')
+            .sort('-createdAt'); // Sắp xếp từ mới nhất đến cũ nhất
+
+        // Để đơn giản hơn cho frontend, có thể format dữ liệu ngay tại đây
+        const formattedOrders = orders.map(order => ({
+            id: order._id,
+            orderIdDisplay: `#ORD-${order._id.toString().slice(-6).toUpperCase()}`, // ID hiển thị rút gọn
+            date: order.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }), // Định dạng ngày
+            items: order.products.map(p => ({
+                name: p.productId.title,
+                quantity: p.quantity,
+                price: p.price, // Giá của sản phẩm tại thời điểm đặt hàng
+                thumbnail: p.productId.thumbnail
+            })),
+            total: order.totalAmount,
+            status: order.orderStatus,
+        }));
+
+        res.json({ total: formattedOrders.length, orders: formattedOrders });
     } catch (error) {
+        console.error("Failed to fetch user orders:", error); // Log lỗi chi tiết
         res.status(500);
         throw new Error("Failed to fetch user orders: " + error.message);
     }

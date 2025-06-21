@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux"; // Import useDispatch
+import { doLogout } from "../../store/features/AuthenSlice"; // Import doLogout action từ AuthenSlice
+import { toast } from "react-toastify"; // Import toast
 import {
     FiUser, FiCreditCard, FiShoppingBag, FiPackage,
     FiHelpCircle, FiMapPin, FiHome, FiSettings,
-    FiLogOut, FiCamera, FiShoppingCart, FiMenu, FiX // Đảm bảo FiMenu, FiX đã được import
+    FiLogOut, FiCamera, FiShoppingCart, FiMenu, FiX
 } from "react-icons/fi";
 
 const ProfileLayout = () => {
@@ -11,13 +14,12 @@ const ProfileLayout = () => {
         name: "Nguyen Hai Quoc",
         avatar: null
     });
-    // State để quản lý trạng thái đóng/mở của sidebar trên mobile
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch(); // Khai báo useDispatch
 
-    // Đóng sidebar khi route thay đổi (trên mobile)
     useEffect(() => {
         setIsSidebarOpen(false);
     }, [location.pathname]);
@@ -32,7 +34,26 @@ const ProfileLayout = () => {
         }
     };
 
-    // Menu items cho người dùng mua hàng
+    const handleLogout = async () => {
+        try {
+            // Có thể gọi API logout ở đây nếu backend của bạn có endpoint logout
+            // Ví dụ: await axios.post("http://localhost:5000/api/auth/logout");
+
+            dispatch(doLogout()); // Dispatch Redux action để cập nhật trạng thái login
+
+            // Xóa thông tin người dùng khỏi localStorage
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("username");
+            // localStorage.removeItem("userEmail"); // Nếu bạn có lưu email
+
+            toast.success("Đăng xuất thành công!", { theme: "colored" }); // Thông báo thành công
+            navigate("/login"); // Điều hướng về trang đăng nhập
+        } catch (error) {
+            console.error("Logout error:", error);
+            toast.error("Đăng xuất thất bại. Vui lòng thử lại.", { theme: "colored" }); // Thông báo thất bại
+        }
+    };
+
     const menuItems = [
         { name: "Dashboard", icon: <FiHome size={20} />, path: "/profile/dashboard" },
         { name: "Orders", icon: <FiShoppingBag size={20} />, path: "/profile/orders" },
@@ -41,6 +62,7 @@ const ProfileLayout = () => {
         { name: "Returns & Exchanges", icon: <FiPackage size={20} />, path: "/profile/returns" },
         { name: "My Profile", icon: <FiUser size={20} />, path: "/profile/my-profile" },
         { name: "Support", icon: <FiHelpCircle size={20} />, path: "/profile/support" },
+        { name: "Settings", icon: <FiSettings size={20} />, path: "/profile/settings" },
     ];
 
     const isActive = (path) => {
@@ -116,11 +138,12 @@ const ProfileLayout = () => {
                 </nav>
 
                 <div className="p-6 border-t border-gray-200">
-                    <div className="flex items-center text-gray-600 hover:text-red-600 cursor-pointer">
-                        <FiSettings className="mr-3" />
-                        Settings
-                    </div>
-                    <div className="flex items-center mt-3 text-gray-600 hover:text-red-600 cursor-pointer">
+                    {/* Settings - đã chuyển vào menuItems */}
+                    {/* Logout - Thêm onClick handler */}
+                    <div
+                        onClick={handleLogout} // <-- Gọi hàm handleLogout ở đây
+                        className="flex items-center mt-3 text-gray-600 hover:text-red-600 cursor-pointer"
+                    >
                         <FiLogOut className="mr-3" />
                         Logout
                     </div>

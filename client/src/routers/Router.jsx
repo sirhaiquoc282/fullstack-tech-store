@@ -19,6 +19,7 @@ import ProfileReturns from "../pages/Profile/Returns";
 import Profile from "../pages/Profile/Profile";
 import ProfileSupport from "../pages/Profile/Support";
 import ProfileAddresses from "../pages/Profile/Addresses";
+import ProfileSettings from "../pages/Profile/Settings";
 
 const Router = createBrowserRouter([
   {
@@ -112,6 +113,10 @@ const Router = createBrowserRouter([
           {
             path: "addresses",
             element: <ProfileAddresses />,
+          },
+          {
+            path: "settings",
+            element: <ProfileSettings />,
           },
           {
             path: "*",

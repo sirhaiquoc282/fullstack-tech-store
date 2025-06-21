@@ -6,24 +6,29 @@ import MenuItem from "@mui/material/MenuItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
+import Typography from "@mui/material/Typography";
 import Tooltip from "@mui/material/Tooltip";
-import SettingsIcon from "@mui/icons-material/Settings"; // Import SettingsIcon
-import LogoutIcon from "@mui/icons-material/Logout"; // Import LogoutIcon
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline'; // Icon cho Personal
-import LockIcon from '@mui/icons-material/Lock'; // Icon cho Change Password
+
+// Import các icons từ react-icons/fi
+import {
+  FiUser, FiCreditCard, FiShoppingBag, FiPackage,
+  FiHelpCircle, FiMapPin, FiHome, FiSettings,
+  FiLogOut
+} from "react-icons/fi";
 
 import { useDispatch, useSelector } from "react-redux";
-import { doLogout } from "../../../store/features/AuthenSlice"; // Đảm bảo đường dẫn đúng
+import { doLogout } from "../../../store/features/AuthenSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import axios from 'axios'; // Đã comment out phần axios trong handleLogout, nhưng vẫn giữ import
+// import axios from 'axios';
 
 export default function AccountMenu() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
-  // Giả định `username` và `userEmail` được lưu trong authenSlice
-  const username = useSelector((state) => state.authenSlice.username);
-  const userEmail = useSelector((state) => state.authenSlice.email); // Lấy email nếu có
+
+  const username = useSelector((state) => state.authenSlice?.username || 'Guest');
+  const userEmail = useSelector((state) => state.authenSlice?.email || 'N/A');
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -35,42 +40,55 @@ export default function AccountMenu() {
   };
 
   const handleLogout = async () => {
-    handleClose(); // Đóng menu trước khi logout
+    handleClose();
     try {
-      // const token = localStorage.getItem("accessToken");
-      // Logic gọi API logout (nếu có)
-      // const response = await axios.post("http://localhost:5000/api/auth/logout", {}, { withCredentials: true });
+      // Your API logout logic here if needed
+      // await axios.post("http://localhost:5000/api/auth/logout");
 
-      dispatch(doLogout()); // Dispatch action Redux
-      localStorage.removeItem("accessToken"); // Xóa token
-      localStorage.removeItem("username"); // Xóa username
-      // localStorage.removeItem("userEmail"); // Xóa email nếu có
-      toast.success("Đăng xuất thành công!");
-      navigate("/login"); // Điều hướng về trang login
+      dispatch(doLogout());
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("username");
+      // localStorage.removeItem("userEmail"); // Uncomment if you store user email in localStorage
+
+      toast.success("Logout successful!", { theme: "colored" });
+      navigate("/login");
     } catch (error) {
-      toast.error("Đăng xuất thất bại!");
+      toast.error("Logout failed!", { theme: "colored" });
       console.error("Logout error:", error);
     }
   };
 
-  // Hàm lấy chữ cái đầu tên
   const getAvatarInitials = (name) => {
-    if (!name) return 'U'; // 'U' for User
+    if (!name || typeof name !== 'string' || name.trim() === '') {
+      return 'U';
+    }
     return name.charAt(0).toLocaleUpperCase();
   }
+
+  // Định nghĩa các mục menu với tên, path, và component icon từ react-icons/fi
+  const accountMenuItems = [
+    { name: "Dashboard", path: "/profile/dashboard", icon: <FiHome /> },
+    { name: "My Orders", path: "/profile/orders", icon: <FiShoppingBag /> },
+    { name: "Payment Methods", path: "/profile/payment-methods", icon: <FiCreditCard /> },
+    { name: "Addresses", path: "/profile/addresses", icon: <FiMapPin /> },
+    { name: "Returns & Exchanges", path: "/profile/returns", icon: <FiPackage /> },
+    { name: "Profile", path: "/profile/my-profile", icon: <FiUser /> },
+    { name: "Support", path: "/profile/support", icon: <FiHelpCircle /> },
+    { name: "Settings", path: "/profile/settings", icon: <FiSettings /> },
+  ];
 
   return (
     <React.Fragment>
       <Box sx={{ display: "flex", alignItems: "center", textAlign: "center" }}>
-        <Tooltip title="Cài đặt tài khoản">
+        <Tooltip title="Account settings">
           <IconButton
             onClick={handleClick}
             size="small"
             sx={{
               ml: 2,
-              p: 0, // Remove default padding for better control
+              p: 0,
               '&:hover': {
-                transform: 'scale(1.1)', // Subtle scale on hover
+                transform: 'scale(1.1)',
                 transition: 'transform 0.2s ease-in-out',
               },
             }}
@@ -82,7 +100,7 @@ export default function AccountMenu() {
               sx={{
                 width: 32,
                 height: 32,
-                bgcolor: '#DC2626', // Màu đỏ chủ đạo (#DC2626)
+                bgcolor: '#DC2626', // Primary red color
                 color: 'white',
                 fontSize: '1rem',
                 fontWeight: 'bold',
@@ -98,38 +116,29 @@ export default function AccountMenu() {
         id="account-menu"
         open={open}
         onClose={handleClose}
-        onClick={handleClose}
+        onClick={handleClose} // Close menu when any MenuItem is clicked
         slotProps={{
           paper: {
             elevation: 0,
             sx: {
               overflow: "visible",
-              filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.1))", // Shadow nhẹ hơn
+              filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.1))", // Subtle shadow
               mt: 1.5,
-              borderRadius: '8px', // Bo góc menu
-              minWidth: 180, // Chiều rộng tối thiểu
-              '& .MuiAvatar-root': {
-                width: 28, // Avatar nhỏ hơn trong menu
-                height: 28,
-                ml: 0, // Reset margin
-                mr: 1, // Khoảng cách phải
-                bgcolor: '#DC2626', // Màu đỏ chủ đạo
-                color: 'white',
-                fontSize: '0.8rem',
+              borderRadius: '8px',
+              minWidth: 200, // Increased min-width for longer text items
+              '& .MuiAvatar-root': { // Style for Avatar within MenuItem
+                width: 28, height: 28, ml: 0, mr: 1,
+                bgcolor: '#DC2626', color: 'white', fontSize: '0.8rem',
               },
-              '&::before': {
-                content: '""',
-                display: "block",
-                position: "absolute",
-                top: 0,
-                right: 14,
-                width: 10,
-                height: 10,
-                bgcolor: "background.paper", // Màu nền menu
-                transform: "translateY(-50%) rotate(45deg)",
-                zIndex: 0,
-                borderLeft: '1px solid #e0e0e0', // Viền cho mũi tên
-                borderTop: '1px solid #e0e0e0',
+              '& .MuiListItemIcon-root': { // Style for ListItemIcon
+                minWidth: 36, // Ensures consistent icon alignment
+                color: '#DC2626', // Red color for icons
+              },
+              '&::before': { // Triangle pointer
+                content: '""', display: "block", position: "absolute", top: 0, right: 14,
+                width: 10, height: 10, bgcolor: "background.paper",
+                transform: "translateY(-50%) rotate(45deg)", zIndex: 0,
+                borderLeft: '1px solid #e0e0e0', borderTop: '1px solid #e0e0e0',
               },
             },
           },
@@ -138,66 +147,62 @@ export default function AccountMenu() {
         anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
         {/* Thông tin user trong menu */}
-        <MenuItem sx={{ py: 1.5, px: 2, cursor: 'default', '&:hover': { bgcolor: 'transparent' } }}>
-          <Avatar sx={{ bgcolor: 'transparent !important', color: '#DC2626 !important' }}> {/* Avatar trong menu item */}
-            {getAvatarInitials(username)}
-          </Avatar>
-          <Box>
+        <MenuItem
+          sx={{
+            py: 1.5,
+            px: 2,
+            cursor: 'default',
+            '&:hover': { bgcolor: 'transparent' },
+            display: 'flex',       // Kích hoạt flexbox
+            flexDirection: 'column', // Xếp avatar và box xuống dòng
+            alignItems: 'center',  // Căn giữa theo chiều ngang
+            justifyContent: 'center', // Căn giữa theo chiều dọc
+            textAlign: 'center',   // Căn giữa text
+            '& .MuiAvatar-root': { // Override avatar style for this specific MenuItem
+              width: 50,         // Kích thước avatar lớn hơn
+              height: 50,
+              mb: 1,             // Margin bottom
+              mt: 0, ml: 0, mr: 0, // Reset margin
+              fontSize: '1.5rem', // Kích thước chữ avatar lớn hơn
+            }
+          }}
+        >
+          <Avatar>{getAvatarInitials(username)}</Avatar>
+          <Box sx={{ flexGrow: 1 }}> {/* flexGrow để box chiếm hết không gian */}
             <Typography variant="body1" sx={{ fontWeight: 'bold', fontSize: '0.95rem' }}>{username || 'Guest'}</Typography>
             <Typography variant="body2" sx={{ fontSize: '0.8rem', color: 'text.secondary' }}>{userEmail || 'N/A'}</Typography>
           </Box>
         </MenuItem>
-        <Divider sx={{ my: 0.5 }} /> {/* Khoảng cách divider */}
+        <Divider sx={{ my: 0.5 }} />
 
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate("/profile/my-profile"); // Điều hướng đến trang My Profile
-          }}
-          sx={{ py: 1, px: 2, '&:hover': { bgcolor: '#FEE2E2', color: '#DC2626' } }} // Hover effect
-        >
-          <ListItemIcon sx={{ minWidth: 36 }}> {/* Căn chỉnh icon */}
-            <PersonOutlineIcon fontSize="small" sx={{ color: '#DC2626' }} /> {/* Icon Personal màu đỏ */}
-          </ListItemIcon>
-          Hồ sơ của tôi
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate("/profile/my-profile"); // Điều hướng đến trang My Profile (tùy bạn có thể đổi thành "/profile/security" nếu có)
-          }}
-          sx={{ py: 1, px: 2, '&:hover': { bgcolor: '#FEE2E2', color: '#DC2626' } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36 }}>
-            <SettingsIcon fontSize="small" sx={{ color: '#DC2626' }} /> {/* Icon Settings màu đỏ */}
-          </ListItemIcon>
-          Cài đặt tài khoản
-        </MenuItem>
-
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate("/profile/my-profile"); // Điều hướng đến trang My Profile, nơi có phần đổi mật khẩu
-          }}
-          sx={{ py: 1, px: 2, '&:hover': { bgcolor: '#FEE2E2', color: '#DC2626' } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36 }}>
-            <LockIcon fontSize="small" sx={{ color: '#DC2626' }} /> {/* Icon Lock màu đỏ */}
-          </ListItemIcon>
-          Đổi mật khẩu
-        </MenuItem>
+        {/* Render Profile Menu Items */}
+        {accountMenuItems.map((item) => (
+          <MenuItem
+            key={item.path}
+            onClick={() => {
+              handleClose();
+              navigate(item.path);
+            }}
+            sx={{ py: 1, px: 2, '&:hover': { bgcolor: '#FEE2E2', color: '#DC2626' } }}
+          >
+            <ListItemIcon sx={{ minWidth: 36, color: '#DC2626' }}>
+              {React.cloneElement(item.icon, { size: 20 })}
+            </ListItemIcon>
+            {item.name}
+          </MenuItem>
+        ))}
 
         <Divider sx={{ my: 0.5 }} />
 
+        {/* Logout Button */}
         <MenuItem
           onClick={handleLogout}
           sx={{ py: 1, px: 2, '&:hover': { bgcolor: '#FEE2E2', color: '#DC2626' } }}
         >
-          <ListItemIcon sx={{ minWidth: 36 }}>
-            <LogoutIcon fontSize="small" sx={{ color: '#DC2626' }} /> {/* Icon Logout màu đỏ */}
+          <ListItemIcon sx={{ minWidth: 36, color: '#DC2626' }}>
+            <FiLogOut size={20} />
           </ListItemIcon>
-          Đăng xuất
+          Logout
         </MenuItem>
       </Menu>
     </React.Fragment>

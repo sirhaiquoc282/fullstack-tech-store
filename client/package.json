@@ -19,6 +19,7 @@
     "@reduxjs/toolkit": "^2.8.2",
     "@tailwindcss/line-clamp": "^0.4.4",
     "axios": "^1.9.0",
+    "card-validator": "^10.0.2",
     "chart.js": "^4.5.0",
     "framer-motion": "^12.18.1",
     "react": "^19.1.0",

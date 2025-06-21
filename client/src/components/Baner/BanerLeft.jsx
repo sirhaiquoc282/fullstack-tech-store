@@ -12,7 +12,7 @@ const BanerLeft = () => {
       if (res.status === 200) {
         setListCategories(res.data);
         console.log(res, "resssss");
-        
+
       }
     };
 
@@ -22,7 +22,7 @@ const BanerLeft = () => {
   const handleClick = (item) => {
     setActiveCategory(item.slug);
     console.log(item, "itemmmm");
-    
+
     navigate("/shop", { state: { category: item.id } });
   };
 
@@ -34,18 +34,16 @@ const BanerLeft = () => {
       </h2>
 
       <div
-        className={`flex flex-col gap-2 py-3 ${
-          listCategories.length > 16 ? "max-h-[650px] overflow-y-auto" : ""
-        }`}
+        className={`flex flex-col gap-2 py-3 ${listCategories.length > 16 ? "max-h-[650px] overflow-y-auto" : ""
+          }`}
       >
         {listCategories?.map((item, index) => (
           <div key={index}>
             <button
-              className={`w-full text-left px-4 py-2 flex items-center gap-5 transition ${
-                activeCategory === item.slug
-                  ? "text-red-600 font-bold" // style khi active
-                  : "hover:text-red-600 text-black" // style mặc định
-              }`}
+              className={`w-full text-left px-4 py-2 flex items-center gap-5 transition ${activeCategory === item.slug
+                ? "text-red-600 font-bold" // style khi active
+                : "hover:text-red-600 text-black" // style mặc định
+                }`}
               onClick={() => handleClick(item)}
             >
               <p>{item.slug}</p>

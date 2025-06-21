@@ -1,231 +1,650 @@
-import React, { useState } from "react";
-import { FiPlus, FiTrash2, FiEdit, FiCheckCircle } from "react-icons/fi"; // Thêm FiCheckCircle
-import { FaCcVisa, FaCcMastercard, FaCreditCard } from "react-icons/fa"; // Icons cho loại thẻ
-import { toast } from "react-toastify"; // Để hiển thị thông báo
+import React, { useState, useEffect } from "react";
+import { FiPlus, FiTrash2, FiEdit, FiCheckCircle, FiCreditCard, FiCalendar, FiLock, FiUser, FiX, FiAlertCircle, FiInfo } from "react-icons/fi";
+import { FaCcVisa, FaCcMastercard } from "react-icons/fa";
+import apiService from "../../service/apiService";
+
+import { number as cardNumberValidator, expirationDate as expirationDateValidator, cvv as cvvValidator } from 'card-validator';
 
 const ProfilePaymentMethods = () => {
-    const [cards, setCards] = useState([
-        {
-            id: 1,
-            type: "Visa", // Loại thẻ
-            bank: "Vietcombank", // Ngân hàng
-            number: "**** **** **** 4512",
-            name: "NGUYEN VAN A", // Tên chủ thẻ (Viết hoa thường)
-            expiry: "12/25",
-            isDefault: true,
-        },
-        {
-            id: 2,
-            type: "Mastercard",
-            bank: "Techcombank",
-            number: "**** **** **** 7821",
-            name: "TRAN THI B",
-            expiry: "08/24",
-            isDefault: false,
-        },
-        {
-            id: 3,
-            type: "ATM", // Thẻ nội địa
-            bank: "Agribank",
-            number: "**** **** **** 1001",
-            name: "LE VAN C",
-            expiry: "N/A", // Thẻ ATM thường không có ngày hết hạn rõ ràng trên thẻ
-            isDefault: false,
-        },
-    ]);
+    const [cards, setCards] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-    const [showAddForm, setShowAddForm] = useState(false); // State để hiển thị/ẩn form thêm mới
-    const [newCardData, setNewCardData] = useState({ // State cho dữ liệu form thêm mới
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [currentEditingCard, setCurrentEditingCard] = useState(null);
+    const [formCardData, setFormCardData] = useState({
         type: "",
-        bank: "",
-        number: "",
-        name: "",
-        expiry: "",
+        bankName: "",
+        cardNumber: "",
+        last4Digits: "",
+        cardholderName: "",
+        expiryDate: "",
+        cvv: "",
+        isDefault: false,
     });
+    const [formErrors, setFormErrors] = useState({});
 
-    const handleSetDefault = (id) => {
-        setCards((prevCards) =>
-            prevCards.map((card) => ({
-                ...card,
-                isDefault: card.id === id,
-            }))
-        );
-        toast.success("Đã đặt làm phương thức mặc định.");
+    const [detectedCardBrand, setDetectedCardBrand] = useState(null);
+
+    const vietnameseBanks = [
+        { value: "", label: "Select Bank" },
+        { value: "Vietcombank", label: "Vietcombank (VCB)" },
+        { value: "Techcombank", label: "Techcombank (TCB)" },
+        { value: "Agribank", label: "Agribank (AGB)" },
+        { value: "BIDV", label: "BIDV" },
+        { value: "VietinBank", label: "VietinBank (CTG)" },
+        { value: "MBBank", label: "MBBank (MB)" },
+        { value: "VPBank", label: "VPBank (VPB)" },
+        { value: "ACB", label: "ACB" },
+        { value: "Sacombank", label: "Sacombank (STB)" },
+        { value: "TPBank", label: "TPBank" },
+        { value: "Eximbank", label: "Eximbank (EIB)" },
+        { value: "HSBC Bank", label: "HSBC Bank (Vietnam)" },
+        { value: "Standard Chartered Bank", label: "Standard Chartered Bank (Vietnam)" },
+        { value: "Shinhan Bank", label: "Shinhan Bank (Vietnam)" },
+    ];
+
+    // Helper to show Custom Dialog
+    const showNotificationDialog = (message, type, confirmActionId = null) => {
+        setDialogMessage(message);
+        setDialogType(type);
+        setCardToDeleteId(confirmActionId);
+        setShowCustomDialog(true);
     };
 
-    const handleDelete = (id) => {
-        setCards((prevCards) => prevCards.filter((card) => card.id !== id));
-        toast.info("Phương thức thanh toán đã được xóa.");
+    const closeCustomDialog = () => {
+        setShowCustomDialog(false);
+        setDialogMessage("");
+        setDialogType("");
+        setCardToDeleteId(null);
     };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setNewCardData((prevData) => ({
-            ...prevData,
-            [name]: value,
+    // State for Custom Confirmation Dialog
+    const [showCustomDialog, setShowCustomDialog] = useState(false);
+    const [dialogMessage, setDialogMessage] = useState("");
+    const [dialogType, setDialogType] = useState("");
+    const [cardToDeleteId, setCardToDeleteId] = useState(null);
+
+    useEffect(() => {
+        const fetchPaymentMethods = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const response = await apiService.getUserPaymentMethods();
+                if (response.status === 200) {
+                    const formattedCards = response.data.map(card => ({
+                        id: card._id,
+                        type: card.cardType || 'Unknown',
+                        bank: card.bankName || 'Unknown Bank',
+                        number: `**** **** **** ${card.last4Digits}`,
+                        name: card.cardholderName || 'N/A',
+                        expiry: card.expiryDate || 'N/A',
+                        isDefault: card.isDefault,
+                    }));
+                    setCards(formattedCards);
+                } else {
+                    setError("Failed to load payment methods.");
+                    showNotificationDialog("Failed to load payment methods.", "error");
+                }
+            } catch (err) {
+                console.error("Error fetching payment methods:", err);
+                setError(err.response?.data?.message || "Error connecting to server.");
+                showNotificationDialog(err.response?.data?.message || "Failed to load payment methods.", "error");
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchPaymentMethods();
+    }, []);
+
+    // --- Form Validation Logic (Using card-validator) ---
+    const validateForm = (data) => {
+        const errors = {};
+        const cardTypeLower = data.type ? data.type.toLowerCase() : '';
+
+        if (!data.type) errors.type = "Card type is required.";
+        if (!data.bankName) errors.bankName = "Bank name is required.";
+
+        const cardNumberCleaned = data.cardNumber.replace(/\s/g, '');
+        const validationCardNumber = cardNumberValidator(cardNumberCleaned);
+
+        if (!cardNumberCleaned) {
+            errors.cardNumber = "Card number is required.";
+        } else if (!validationCardNumber.isValid) {
+            errors.cardNumber = validationCardNumber.isPotentiallyValid ? "Invalid card number." : "Card number is too short or contains invalid characters.";
+        } else if (validationCardNumber.card && validationCardNumber.card.type.toLowerCase() !== cardTypeLower) {
+            errors.cardNumber = "Card number does not match selected card type.";
+        }
+
+        if (!data.cardholderName.trim()) errors.cardholderName = "Cardholder name is required.";
+
+        // Expiry Date validation (only for non-ATM cards)
+        if (cardTypeLower !== 'atm') {
+            const validationExpiry = expirationDateValidator(data.expiryDate);
+            if (!data.expiryDate) {
+                errors.expiryDate = "Expiry date is required.";
+            } else if (!validationExpiry.isValid) {
+                errors.expiryDate = validationExpiry.isPotentiallyValid ? "Invalid expiry date (MM/YY)." : "Expiry date is in the past or invalid format.";
+            } else if (validationExpiry.isExpired) {
+                errors.expiryDate = "Card has expired.";
+            }
+        }
+
+        // CVV/CVC validation (only for non-ATM cards, and if type is selected)
+        // Use card.code.size from card-validator for CVV length expectation
+        if (cardTypeLower !== 'atm' && cardTypeLower !== '') {
+            const validationCvv = cvvValidator(data.cvv, (detectedCardBrand || validationCardNumber.card)?.code.size);
+            if (!data.cvv) {
+                errors.cvv = "CVV is required.";
+            } else if (!validationCvv.isValid) {
+                errors.cvv = validationCvv.isPotentiallyValid ? "Invalid CVV." : "CVV is too short or contains invalid characters.";
+            }
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0; // Return true if no errors
+    };
+
+    // --- Handlers ---
+    const handleSetDefault = async (id) => {
+        try {
+            const response = await apiService.updatePaymentMethod(id, { isDefault: true });
+
+            if (response.status === 200 && response.data.savedCards) {
+                const formattedCards = response.data.savedCards.map(card => ({
+                    id: card._id, type: card.cardType, bank: card.bankName,
+                    number: `**** **** **** ${card.last4Digits}`, name: card.cardholderName,
+                    expiry: card.expiryDate, isDefault: card.isDefault,
+                }));
+                setCards(formattedCards);
+                showNotificationDialog("Set as default payment method successfully!", "success");
+            } else {
+                showNotificationDialog("Failed to set as default. Backend did not return updated list.", "error");
+            }
+        } catch (error) {
+            console.error("Error setting default method:", error);
+            showNotificationDialog(error.response?.data?.message || "Failed to set as default.", "error");
+        }
+    };
+
+    const handleDeleteAttempt = (id) => {
+        showNotificationDialog("Are you sure you want to delete this payment method?", "confirm", id);
+    };
+
+    const handleDeleteConfirmed = async () => {
+        if (!cardToDeleteId) return;
+        try {
+            await apiService.deletePaymentMethod(cardToDeleteId);
+            setCards((prevCards) => prevCards.filter((card) => card.id !== cardToDeleteId));
+            showNotificationDialog("Payment method deleted successfully!", "info");
+        } catch (error) {
+            console.error("Error deleting method:", error);
+            showNotificationDialog(error.response?.data?.message || "Failed to delete payment method.", "error");
+        } finally {
+            closeCustomDialog();
+        }
+    };
+
+    const handleEdit = (card) => {
+        setCurrentEditingCard(card);
+        setFormCardData({
+            type: card.type,
+            bankName: card.bank,
+            cardNumber: card.number.replace(/\* /g, ''), // Unmask and remove spaces for editing
+            last4Digits: card.number.slice(-4),
+            cardholderName: card.name,
+            expiryDate: card.expiry === "N/A" ? "" : card.expiry,
+            cvv: "", // CVV always empty for edit
+            isDefault: card.isDefault,
+        });
+        setFormErrors({}); // Clear any previous form errors
+        setDetectedCardBrand(card.type.toLowerCase()); // Set detected brand for editing
+        setShowAddForm(true); // Show form
+    };
+
+    // Handles input changes in the form, including formatting and type detection
+    const handleFormChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        let formattedValue = value;
+        let newDetectedBrand = detectedCardBrand;
+        let newErrors = { ...formErrors, [name]: '' };
+
+        if (name === "cardNumber") {
+            const rawValue = value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+            const validation = cardNumberValidator(rawValue);
+
+            if (validation.card) {
+                newDetectedBrand = validation.card.type;
+            } else {
+                newDetectedBrand = null;
+            }
+
+            formattedValue = rawValue.replace(/(\d{4})/g, '$1 ').trim();
+            if (formattedValue.length > 19) formattedValue = formattedValue.slice(0, 19);
+
+            if (!rawValue) {
+                newErrors.cardNumber = "Card number is required.";
+            } else if (!validation.isPotentiallyValid) { // For live validation feedback, use isPotentiallyValid
+                newErrors.cardNumber = "Invalid card number.";
+            } else if (validation.isPotentiallyValid && !validation.isValid && rawValue.length >= (validation.card?.lengths?.[0] || 16)) {
+                newErrors.cardNumber = "Card number is too short or contains invalid characters.";
+            }
+
+            if (formCardData.type && validation.card && validation.card.type.toLowerCase() !== formCardData.type.toLowerCase()) {
+                newErrors.cardNumber = "Card number does not match selected card type.";
+            }
+            setDetectedCardBrand(newDetectedBrand);
+
+        } else if (name === "expiryDate") {
+            formattedValue = value.replace(/\s/g, '').replace(/[^0-9]/g, '');
+            if (formattedValue.length > 2) {
+                formattedValue = formattedValue.slice(0, 2) + '/' + formattedValue.slice(2, 4);
+            }
+            if (formattedValue.length > 5) formattedValue = formattedValue.slice(0, 5);
+
+            const validation = expirationDateValidator(formattedValue);
+            if (!formattedValue) {
+                newErrors.expiryDate = "Expiry date is required.";
+            } else if (!validation.isPotentiallyValid) {
+                newErrors.expiryDate = "Invalid expiry date (MM/YY).";
+            } else if (validation.isPotentiallyValid && validation.isExpired) {
+                newErrors.expiryDate = "Card has expired.";
+            }
+        } else if (name === "cvv") {
+            // Corrected CVV formatting and validation handling
+            formattedValue = value.replace(/[^0-9]/g, ''); // Ensure only digits
+
+            // Get expected CVV length based on detected brand or default
+            const expectedCvvLength = (detectedCardBrand && cardNumberValidator(formCardData.cardNumber.replace(/\s/g, '')).card?.type === detectedCardBrand && detectedCardBrand.code?.size)
+                || (cardNumberValidator(formCardData.cardNumber.replace(/\s/g, '')).card?.code?.size) // Fallback to current card number's type
+                || 3; // Default to 3 if no card type is known (e.g., for ATM)
+
+            if (formattedValue.length > expectedCvvLength) { // Only slice if it exceeds expected
+                formattedValue = formattedValue.slice(0, expectedCvvLength);
+            }
+
+            const validation = cvvValidator(formattedValue, expectedCvvLength); // Pass expected length
+            if (!formattedValue) {
+                newErrors.cvv = "CVV is required.";
+            } else if (!validation.isPotentiallyValid) { // Use isPotentiallyValid for live feedback
+                newErrors.cvv = "Invalid CVV.";
+            } else if (validation.isPotentiallyValid && !validation.isValid && formattedValue.length === expectedCvvLength) {
+                newErrors.cvv = "CVV is too short or contains invalid characters."; // Only if fully typed and invalid
+            }
+        }
+
+        setFormCardData((prev) => ({
+            ...prev,
+            [name]: type === 'checkbox' ? checked : formattedValue,
         }));
+        setFormErrors(newErrors);
     };
 
-    const handleAddNewCard = (e) => {
+    // Handles form submission for adding or updating a card
+    const handleFormSubmit = async (e) => {
         e.preventDefault();
-        if (!newCardData.type || !newCardData.bank || !newCardData.number || !newCardData.name) {
-            toast.error("Vui lòng điền đầy đủ thông tin thẻ.");
+        if (!validateForm(formCardData)) {
+            showNotificationDialog("Please correct the errors in the form.", "error"); // Sử dụng custom dialog
             return;
         }
 
-        const newId = cards.length > 0 ? Math.max(...cards.map(c => c.id)) + 1 : 1;
-        const newCard = {
-            id: newId,
-            ...newCardData,
-            isDefault: false, // Thẻ mới thường không phải là mặc định
+        const dataToSend = {
+            cardType: formCardData.type,
+            bankName: formCardData.bankName,
+            last4Digits: formCardData.cardNumber.replace(/\s/g, '').slice(-4),
+            cardholderName: formCardData.cardholderName,
+            expiryDate: formCardData.expiryDate === '' && formCardData.type.toLowerCase() === 'atm' ? 'N/A' : formCardData.expiryDate,
+            isDefault: formCardData.isDefault,
         };
 
-        setCards((prevCards) => [...prevCards, newCard]);
-        setNewCardData({ type: "", bank: "", number: "", name: "", expiry: "" }); // Reset form
-        setShowAddForm(false); // Ẩn form
-        toast.success("Đã thêm phương thức thanh toán mới.");
-    };
+        try {
+            let response;
+            if (currentEditingCard) {
+                response = await apiService.updatePaymentMethod(currentEditingCard.id, dataToSend);
+            } else {
+                response = await apiService.addPaymentMethod(dataToSend);
+            }
 
-    // Helper để lấy icon phù hợp
-    const getCardIcon = (type) => {
-        switch (type.toLowerCase()) {
-            case "visa":
-                return <FaCcVisa className="text-white text-xl" />;
-            case "mastercard":
-                return <FaCcMastercard className="text-white text-xl" />;
-            case "atm": // Icon cho thẻ ATM/nội địa
-                return <FaCreditCard className="text-white text-xl" />;
-            default:
-                return <FiCreditCard className="text-white" />;
+            if (response.status === 200 || response.status === 201) {
+                if (response.data.savedCards) {
+                    const formattedCards = response.data.savedCards.map(card => ({
+                        id: card._id, type: card.cardType, bank: card.bankName,
+                        number: `**** **** **** ${card.last4Digits}`, name: card.cardholderName,
+                        expiry: card.expiryDate, isDefault: card.isDefault,
+                    }));
+                    setCards(formattedCards);
+                    showNotificationDialog(currentEditingCard ? "Payment method updated successfully!" : "New payment method added successfully!", "success");
+                } else {
+                    const fetchResponse = await apiService.getUserPaymentMethods();
+                    if (fetchResponse.status === 200) {
+                        const formattedFetchedCards = fetchResponse.data.map(card => ({
+                            id: card._id, type: card.cardType, bank: card.bankName,
+                            number: `**** **** **** ${card.last4Digits}`, name: card.cardholderName,
+                            expiry: card.expiryDate, isDefault: card.isDefault,
+                        }));
+                        setCards(formattedFetchedCards);
+                        showNotificationDialog(currentEditingCard ? "Payment method updated successfully!" : "New payment method added successfully!", "success");
+                    }
+                }
+            } else {
+                showNotificationDialog(response.data.message || (currentEditingCard ? "Failed to update payment method." : "Failed to add payment method."), "error");
+            }
+            // Reset form state and close form
+            setShowAddForm(false);
+            setCurrentEditingCard(null);
+            setFormCardData({ type: "", bankName: "", cardNumber: "", last4Digits: "", cardholderName: "", expiryDate: "", cvv: "", isDefault: false });
+            setFormErrors({});
+            setDetectedCardBrand(null); // Reset detected type
+        } catch (error) {
+            console.error("Error saving payment method:", error);
+            showNotificationDialog(error.response?.data?.message || "Error saving payment method.", "error");
         }
     };
 
-    return (
-        <div className="space-y-8 p-4 md:p-6 bg-white rounded-xl shadow-lg"> {/* Padding và shadow cho toàn bộ khối */}
-            {/* Header và Nút thêm mới */}
-            <div className="flex justify-between items-center border-b pb-4">
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Phương Thức Thanh Toán</h1>
+    // --- Helper to get Card Icons (for colored square icon in list) ---
+    const getCardIcon = (type) => {
+        switch (type.toLowerCase()) {
+            case "visa": return <FaCcVisa className="text-white text-xl" />;
+            case "mastercard": return <FaCcMastercard className="text-white text-xl" />;
+            case "atm": return <FiCreditCard className="text-white text-xl" />;
+            case "jcb": return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/JCB_logo.svg/200px-JCB_logo.svg.png" alt="JCB" className="h-5 w-auto" />;
+            default: return <FiCreditCard className="text-white" />;
+        }
+    };
+
+    // --- Helper to get actual card brand logo (for display in list beside bank name) ---
+    const getCardBrandLogo = (type) => {
+        switch (type.toLowerCase()) {
+            case "visa": return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Visa_Inc._logo.svg/200px-Visa_Inc._logo.svg.png" alt="Visa" className="h-5 w-auto" />;
+            case "mastercard": return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/Mastercard-logo.svg/200px-Mastercard-logo.svg.png" alt="Mastercard" className="h-5 w-auto" />;
+            case "jcb": return <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/JCB_logo.svg/200px-JCB_logo.svg.png" alt="JCB" className="h-5 w-auto" />;
+            case "atm": return <FiCreditCard size={20} className="text-gray-500" />;
+            default: return <FiCreditCard size={20} className="text-gray-500" />;
+        }
+    };
+
+    // --- Custom Confirmation Dialog Component ---
+    const CustomConfirmDialog = ({ message, type, onConfirm, onCancel }) => {
+        let bgColor, textColor, icon;
+        switch (type) {
+            case 'success': bgColor = 'bg-green-100'; textColor = 'text-green-800'; icon = <FiCheckCircle size={24} />; break;
+            case 'error': bgColor = 'bg-red-100'; textColor = 'text-red-800'; icon = <FiAlertCircle size={24} />; break;
+            case 'info': bgColor = 'bg-blue-100'; textColor = 'text-blue-800'; icon = <FiInfo size={24} />; break;
+            case 'confirm': bgColor = 'bg-yellow-100'; textColor = 'text-yellow-800'; icon = <FiAlertCircle size={24} />; break;
+            default: bgColor = 'bg-gray-100'; textColor = 'text-gray-800'; icon = null;
+        }
+
+        return (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm relative">
+                    <div className={`p-5 flex items-center gap-4 ${bgColor} rounded-t-xl`}>
+                        {icon && <div className={textColor}>{icon}</div>}
+                        <p className={`font-semibold text-lg ${textColor}`}>{type === 'confirm' ? "Confirm Action" : "Notification"}</p>
+                    </div>
+                    <button onClick={onCancel} className="absolute top-3 right-3 text-gray-500 hover:text-gray-700">
+                        <FiX size={20} />
+                    </button>
+                    <div className="p-5 text-gray-700">
+                        <p className="mb-4">{message}</p>
+                        {type === 'confirm' && (
+                            <div className="flex justify-end space-x-3">
+                                <button onClick={onCancel} className="px-4 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-100 transition">Cancel</button>
+                                <button onClick={onConfirm} className="bg-red-700 text-white px-4 py-2 rounded-md hover:bg-red-800 transition">Confirm</button>
+                            </div>
+                        )}
+                        {type !== 'confirm' && (
+                            <div className="flex justify-end">
+                                <button onClick={onCancel} className="bg-red-700 text-white px-4 py-2 rounded-md hover:bg-red-800 transition">OK</button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+
+    // --- Loading & Error States Display ---
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-full py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-700"></div>
+                <p className="ml-4 text-gray-600">Loading payment methods...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="text-center py-20">
+                <h2 className="text-xl font-bold text-red-600 mb-4">Error Loading Payment Methods</h2>
+                <p className="text-gray-700">{error}</p>
                 <button
-                    onClick={() => setShowAddForm(!showAddForm)}
+                    onClick={() => window.location.reload()}
+                    className="mt-6 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition"
+                >
+                    Retry
+                </button>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-8 p-4 md:p-6 bg-white rounded-xl shadow-lg">
+            {/* Custom Confirmation Dialog */}
+            {showCustomDialog && (
+                <CustomConfirmDialog
+                    message={dialogMessage}
+                    type={dialogType}
+                    onConfirm={dialogType === 'confirm' ? () => handleDeleteConfirmed(cardToDeleteId) : closeCustomDialog}
+                    onCancel={closeCustomDialog}
+                />
+            )}
+
+            {/* Header and Add New Button */}
+            <div className="flex justify-between items-center border-b pb-4">
+                <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Payment Methods</h1>
+                <button
+                    onClick={() => {
+                        setCurrentEditingCard(null); // Reset for new card
+                        setFormCardData({ type: "", bankName: "", cardNumber: "", last4Digits: "", cardholderName: "", expiryDate: "", cvv: "", isDefault: false }); // Clear form
+                        setFormErrors({}); // Clear errors
+                        setShowAddForm(!showAddForm); // Toggle form visibility
+                    }}
                     className="
-            bg-blue-600 text-white px-5 py-2.5 rounded-lg flex items-center
-            hover:bg-blue-700 transition-colors duration-200
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+            bg-red-700 text-white px-5 py-2.5 rounded-lg flex items-center
+            hover:bg-red-800 transition-colors duration-200
+            focus:outline-none focus:ring-2 focus:ring-red-700 focus:ring-offset-2
           "
                 >
                     <FiPlus className="mr-2 text-lg" />
-                    {showAddForm ? "Hủy Thêm Mới" : "Thêm Mới"}
+                    {showAddForm ? "Cancel" : "Add New"}
                 </button>
             </div>
 
-            {/* Form thêm phương thức mới (hiển thị theo chiều dọc) */}
+            {/* Add/Edit Payment Method Form */}
             {showAddForm && (
                 <div className="bg-gray-50 p-6 rounded-lg shadow-inner border border-gray-200">
-                    <h2 className="text-xl font-semibold mb-4 text-gray-800">Thêm Phương Thức Thanh Toán Mới</h2>
-                    <form onSubmit={handleAddNewCard} className="space-y-4">
+                    <h2 className="text-xl font-semibold mb-4 text-gray-800">
+                        {currentEditingCard ? "Edit Payment Method" : "Add New Payment Method"}
+                    </h2>
+                    <form onSubmit={handleFormSubmit} className="space-y-4">
+                        {/* Card Type Select Input */}
                         <div>
-                            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">Loại Thẻ</label>
+                            <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">Card Type <span className="text-red-600">*</span></label>
                             <select
                                 id="type"
                                 name="type"
-                                value={newCardData.type}
-                                onChange={handleInputChange}
-                                className="
-                  block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
-                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
-                "
+                                value={formCardData.type}
+                                onChange={handleFormChange}
+                                className={`
+                  block w-full px-3 py-2 border rounded-md shadow-sm
+                  focus:outline-none focus:ring-red-700 focus:border-red-700 sm:text-sm
+                  ${formErrors.type ? 'border-red-500' : 'border-gray-300'}
+                `}
                                 required
                             >
-                                <option value="">Chọn loại thẻ</option>
+                                <option value="">Select card type</option>
                                 <option value="Visa">Visa</option>
                                 <option value="Mastercard">Mastercard</option>
-                                <option value="ATM">Thẻ ATM nội địa</option>
-                                <option value="JCB">JCB</option> {/* Thêm loại thẻ phổ biến khác */}
+                                <option value="ATM">Domestic ATM Card</option>
+                                <option value="JCB">JCB</option>
                             </select>
+                            {formErrors.type && <p className="text-red-500 text-xs mt-1">{formErrors.type}</p>}
                         </div>
+
+                        {/* Bank Name Select Input */}
                         <div>
-                            <label htmlFor="bank" className="block text-sm font-medium text-gray-700 mb-1">Ngân Hàng</label>
-                            <input
-                                type="text"
-                                id="bank"
-                                name="bank"
-                                value={newCardData.bank}
-                                onChange={handleInputChange}
-                                className="
-                  block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
-                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
-                "
-                                placeholder="Ví dụ: Vietcombank, Techcombank..."
+                            <label htmlFor="bankName" className="block text-sm font-medium text-gray-700 mb-1">Bank Name <span className="text-red-600">*</span></label>
+                            <select
+                                id="bankName"
+                                name="bankName"
+                                value={formCardData.bankName}
+                                onChange={handleFormChange}
+                                className={`
+                  block w-full px-3 py-2 border rounded-md shadow-sm
+                  focus:outline-none focus:ring-red-700 focus:border-red-700 sm:text-sm
+                  ${formErrors.bankName ? 'border-red-500' : 'border-gray-300'}
+                `}
                                 required
-                            />
+                            >
+                                {vietnameseBanks.map(bank => (
+                                    <option key={bank.value} value={bank.value}>{bank.label}</option>
+                                ))}
+                            </select>
+                            {formErrors.bankName && <p className="text-red-500 text-xs mt-1">{formErrors.bankName}</p>}
                         </div>
+
+                        {/* Card Number Input (optimized) */}
                         <div>
-                            <label htmlFor="number" className="block text-sm font-medium text-gray-700 mb-1">Số Thẻ (4 số cuối)</label>
-                            <input
-                                type="text"
-                                id="number"
-                                name="number"
-                                value={newCardData.number}
-                                onChange={handleInputChange}
-                                className="
-                  block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
-                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
-                "
-                                placeholder="VD: **** **** **** 1234"
-                                maxLength={19} // Số thẻ thường là 16-19 chữ số
-                                required
-                            />
+                            <label htmlFor="cardNumber" className="block text-sm font-medium text-gray-700 mb-1">Card Number <span className="text-red-600">*</span></label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    id="cardNumber"
+                                    name="cardNumber"
+                                    value={formCardData.cardNumber}
+                                    onChange={handleFormChange}
+                                    className={`
+                    block w-full px-3 py-2 pl-10 border rounded-md shadow-sm
+                    focus:outline-none focus:ring-red-700 focus:border-red-700 sm:text-sm
+                    ${formErrors.cardNumber ? 'border-red-500' : 'border-gray-300'}
+                  `}
+                                    placeholder="e.g., 1234 5678 9012 3456"
+                                    required
+                                />
+                                <FiCreditCard className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            </div>
+                            {formErrors.cardNumber && <p className="text-red-500 text-xs mt-1">{formErrors.cardNumber}</p>}
                         </div>
+
+                        {/* Cardholder Name */}
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Tên Chủ Thẻ</label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={newCardData.name}
-                                onChange={handleInputChange}
-                                className="
-                  block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
-                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
-                "
-                                placeholder="Tên trên thẻ (VIẾT HOA KHÔNG DẤU)"
-                                required
-                            />
+                            <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 mb-1">Cardholder Name <span className="text-red-600">*</span></label>
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    id="cardholderName"
+                                    name="cardholderName"
+                                    value={formCardData.cardholderName}
+                                    onChange={handleFormChange}
+                                    className={`
+                    block w-full px-3 py-2 pl-10 border rounded-md shadow-sm
+                    focus:outline-none focus:ring-red-700 focus:border-red-700 sm:text-sm
+                    ${formErrors.cardholderName ? 'border-red-500' : 'border-gray-300'}
+                  `}
+                                    placeholder="Name as on card (CAPITAL LETTERS, NO ACCENTS)"
+                                    required
+                                />
+                                <FiUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                            </div>
+                            {formErrors.cardholderName && <p className="text-red-500 text-xs mt-1">{formErrors.cardholderName}</p>}
                         </div>
-                        <div>
-                            <label htmlFor="expiry" className="block text-sm font-medium text-gray-700 mb-1">Ngày Hết Hạn (MM/YY)</label>
+
+                        {/* Expiry Date (MM/YY) */}
+                        {formCardData.type !== 'ATM' && ( // Only show for non-ATM cards
+                            <div>
+                                <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-1">Expiry Date (MM/YY) <span className="text-red-600">*</span></label>
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        id="expiryDate"
+                                        name="expiryDate"
+                                        value={formCardData.expiryDate}
+                                        onChange={handleFormChange}
+                                        className={`
+                      block w-full px-3 py-2 pl-10 border rounded-md shadow-sm
+                      focus:outline-none focus:ring-red-700 focus:border-red-700 sm:text-sm
+                      ${formErrors.expiryDate ? 'border-red-500' : 'border-gray-300'}
+                    `}
+                                        placeholder="MM/YY e.g., 12/25"
+                                        maxLength={5}
+                                        required={formCardData.type !== 'ATM'} // Required for non-ATM
+                                    />
+                                    <FiCalendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                </div>
+                                {formErrors.expiryDate && <p className="text-red-500 text-xs mt-1">{formErrors.expiryDate}</p>}
+                            </div>
+                        )}
+
+                        {/* CVV/CVC (Only show for non-ATM cards) */}
+                        {formCardData.type !== 'ATM' && formCardData.type !== '' && (
+                            <div>
+                                <label htmlFor="cvv" className="block text-sm font-medium text-gray-700 mb-1">CVV/CVC <span className="text-red-600">*</span></label>
+                                <div className="relative">
+                                    <input
+                                        type="tel" // Changed to tel
+                                        id="cvv"
+                                        name="cvv"
+                                        value={formCardData.cvv}
+                                        onChange={handleFormChange}
+                                        className={`
+                      block w-full px-3 py-2 pl-10 border rounded-md shadow-sm
+                      focus:outline-none focus:ring-red-700 focus:border-red-700 sm:text-sm
+                      ${formErrors.cvv ? 'border-red-500' : 'border-gray-300'}
+                    `}
+                                        placeholder="e.g., 123 (3 or 4 digits)"
+                                        maxLength={4}
+                                        required={formCardData.type !== 'ATM'} // Required for non-ATM
+                                    />
+                                    <FiLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                </div>
+                                {formErrors.cvv && <p className="text-red-500 text-xs mt-1">{formErrors.cvv}</p>}
+                            </div>
+                        )}
+
+                        {/* Set as Default Checkbox */}
+                        <div className="flex items-center">
                             <input
-                                type="text"
-                                id="expiry"
-                                name="expiry"
-                                value={newCardData.expiry}
-                                onChange={handleInputChange}
-                                className="
-                  block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm
-                  focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm
-                "
-                                placeholder="VD: 12/25 (Nếu là thẻ ATM, có thể bỏ trống)"
-                                maxLength={5}
+                                type="checkbox"
+                                id="isDefault"
+                                name="isDefault"
+                                checked={formCardData.isDefault}
+                                onChange={handleFormChange}
+                                className="form-checkbox h-4 w-4 text-red-700 border-gray-300 rounded focus:ring-red-700"
                             />
+                            <label htmlFor="isDefault" className="ml-2 text-gray-700 text-sm">Set as default payment method</label>
                         </div>
+
+                        {/* Form Action Buttons */}
                         <button
                             type="submit"
                             className="
-                w-full bg-green-600 text-white px-4 py-2.5 rounded-md flex items-center justify-center
-                hover:bg-green-700 transition-colors duration-200
-                focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2
+                w-full bg-red-700 text-white px-4 py-2.5 rounded-md flex items-center justify-center
+                hover:bg-red-800 transition-colors duration-200
+                focus:outline-none focus:ring-2 focus:ring-red-700 focus:ring-offset-2
               "
                         >
-                            <FiPlus className="mr-2" /> Thêm Thẻ
+                            <FiPlus className="mr-2" /> {currentEditingCard ? "Update Card" : "Add Card"}
                         </button>
                     </form>
                 </div>
             )}
 
-            {/* Danh sách các phương thức thanh toán hiện có */}
-            <div className="space-y-4"> {/* Dùng space-y để tạo khoảng cách giữa các card */}
-                {cards.length === 0 ? (
-                    <p className="text-gray-600 text-center py-8">Bạn chưa có phương thức thanh toán nào.</p>
+            {/* List of existing payment methods */}
+            <div className="space-y-4">
+                {cards.length === 0 && !loading ? (
+                    <p className="text-gray-600 text-center py-8">You have no payment methods added yet.</p>
                 ) : (
                     cards.map((card) => (
                         <div
@@ -235,16 +654,11 @@ const ProfilePaymentMethods = () => {
                 flex flex-col sm:flex-row justify-between items-start sm:items-center
               "
                         >
-                            {/* Thông tin thẻ */}
+                            {/* Card Information */}
                             <div className="flex items-center mb-4 sm:mb-0">
-                                <div className={`
-                  w-12 h-8 rounded-md flex items-center justify-center mr-4 text-white text-lg
-                  ${card.type === "Visa" ? "bg-blue-800" :
-                                        card.type === "Mastercard" ? "bg-red-700" :
-                                            card.type === "ATM" ? "bg-green-700" : "bg-gray-700"
-                                    }
-                `}>
-                                    {getCardIcon(card.type)}
+                                <div className="flex items-center justify-center mr-4 text-white text-lg">
+                                    {/* Display actual card brand logo or fallback icon */}
+                                    {getCardBrandLogo(card.type)}
                                 </div>
                                 <div>
                                     <h3 className="font-semibold text-lg text-gray-800">{card.bank} ({card.type})</h3>
@@ -252,20 +666,20 @@ const ProfilePaymentMethods = () => {
                                 </div>
                             </div>
 
-                            {/* Chi tiết và hành động */}
+                            {/* Details and Actions */}
                             <div className="flex flex-col sm:flex-row items-end sm:items-center gap-3">
                                 <div className="text-right sm:text-left mr-0 sm:mr-6">
-                                    <p className="text-sm text-gray-500">Chủ thẻ</p>
+                                    <p className="text-sm text-gray-500">Cardholder Name</p>
                                     <p className="font-medium text-gray-700">{card.name}</p>
                                 </div>
                                 {card.expiry !== "N/A" && (
                                     <div className="text-right sm:text-left mr-0 sm:mr-6">
-                                        <p className="text-sm text-gray-500">Hết hạn</p>
+                                        <p className="text-sm text-gray-500">Expiry Date</p>
                                         <p className="font-medium text-gray-700">{card.expiry}</p>
                                     </div>
                                 )}
 
-                                {/* Nút đặt làm mặc định */}
+                                {/* Set as Default Button */}
                                 <button
                                     onClick={() => handleSetDefault(card.id)}
                                     className={`
@@ -278,32 +692,33 @@ const ProfilePaymentMethods = () => {
                                     disabled={card.isDefault}
                                 >
                                     {card.isDefault ? (
-                                        <span className="flex items-center"><FiCheckCircle className="mr-1" /> Mặc định</span>
+                                        <span className="flex items-center"><FiCheckCircle className="mr-1" /> Default</span>
                                     ) : (
-                                        "Đặt làm mặc định"
+                                        "Set as Default"
                                     )}
                                 </button>
 
-                                {/* Nút hành động (Edit, Delete) */}
+                                {/* Action Buttons (Edit, Delete) */}
                                 <div className="flex space-x-2">
                                     <button
                                         className="
-                      p-2 rounded-full text-gray-500 hover:text-blue-600 hover:bg-gray-100
-                      transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500
+                      p-2 rounded-full text-gray-500 hover:text-red-700 hover:bg-gray-100
+                      transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-700
                     "
-                                        title="Chỉnh sửa"
+                                        title="Edit"
+                                        onClick={() => handleEdit(card)}
                                     >
-                                        <FiEdit className="text-lg" />
+                                        <FiEdit size={20} />
                                     </button>
                                     <button
                                         className="
-                      p-2 rounded-full text-gray-500 hover:text-red-600 hover:bg-gray-100
-                      transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-500
+                      p-2 rounded-full text-gray-500 hover:text-red-700 hover:bg-gray-100
+                      transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-red-700
                     "
-                                        title="Xóa"
-                                        onClick={() => handleDelete(card.id)}
+                                        title="Delete"
+                                        onClick={() => handleDeleteAttempt(card.id)}
                                     >
-                                        <FiTrash2 className="text-lg" />
+                                        <FiTrash2 size={20} />
                                     </button>
                                 </div>
                             </div>
@@ -312,15 +727,16 @@ const ProfilePaymentMethods = () => {
                 )}
             </div>
 
-            {/* Phần bảo mật thanh toán */}
-            <div className="bg-gray-50 rounded-xl shadow-inner p-6 border border-gray-200 mt-8"> {/* shadow-inner, border */}
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">Bảo Mật Thanh Toán</h2>
+            {/* Payment Security Section */}
+            <div className="bg-gray-50 rounded-xl shadow-inner p-6 border border-gray-200 mt-8">
+                <h2 className="text-xl font-semibold mb-4 text-gray-800">Payment Security</h2>
                 <p className="text-gray-600 mb-4 leading-relaxed">
-                    Thông tin thanh toán của bạn được lưu trữ và mã hóa an toàn. Chúng tôi cam kết không chia sẻ chi tiết tài chính của bạn với bên thứ ba.
+                    Your payment information is securely stored and encrypted. We never share your financial
+                    details with third parties.
                 </p>
                 <div className="flex items-center text-green-600 font-medium">
-                    <FiCheckCircle className="h-5 w-5 mr-2" /> {/* Sử dụng FiCheckCircle từ react-icons */}
-                    <span>Xử lý thanh toán an toàn và bảo mật</span>
+                    <FiCheckCircle className="h-5 w-5 mr-2" />
+                    <span>Secure Payment Processing</span>
                 </div>
             </div>
         </div>

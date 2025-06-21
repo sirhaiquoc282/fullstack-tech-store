@@ -3,10 +3,10 @@ import { NavLink } from "react-router-dom";
 
 const HeaderMenu = () => {
   const listMenu = [
-    { title: "Trang chủ", to: "/" },
-    { title: "Cửa hàng", to: "/shop" },
+    { title: "Home", to: "/" },
+    { title: "Shop", to: "/shop" },
     // { title: "Sản phẩm", to: "/product" }, // Đã bị thiếu title, nếu muốn dùng thì thêm title
-    { title: "Liên hệ", to: "/contact" },
+    { title: "Contract", to: "/contact" },
   ];
 
   return (
