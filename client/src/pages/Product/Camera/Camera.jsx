@@ -63,7 +63,7 @@ function SamplePrevArrow(props) {
 
 const Camera = () => {
   const settings = {
-    dots: true,
+    dots: false, // Đã tắt dots
     infinite: true,
     slidesToShow: 3,
     slidesToScroll: 1,
@@ -78,14 +78,14 @@ const Camera = () => {
         breakpoint: 1024,
         settings: {
           slidesToShow: 3,
-          dots: true
+          dots: false // Đã tắt dots
         }
       },
       {
         breakpoint: 768,
         settings: {
           slidesToShow: 2,
-          dots: true
+          dots: false // Đã tắt dots
         }
       },
       {

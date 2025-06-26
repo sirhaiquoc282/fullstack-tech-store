@@ -2,7 +2,7 @@ import React from 'react';
 
 const ServiceDV = () => {
   return (
-    <section className="mt-16 py-10 px-4">
+    <section className="mt-5 py-5 px-4">
       <div className="
         container mx-auto
         flex

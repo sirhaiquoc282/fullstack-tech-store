@@ -3,7 +3,6 @@ import Headerlogo from "./Headerlogo";
 import HeaderSeach from "./HeaderSeach";
 import HeaderTT from "./HeaderTT";
 import { Link } from "react-router-dom";
-import BanerLeft from "../../Baner/BanerLeft";
 import apiService from "../../../service/apiService";
 import { useNavigate } from "react-router-dom";
 
@@ -90,9 +89,8 @@ const HeaderTop = () => {
 
       {/* --- Sidebar --- */}
       <div
-        className={`fixed top-0 right-0 h-full bg-white z-50 transform transition-transform duration-300 ease-in-out ${
-          visible ? "translate-x-0" : "translate-x-full"
-        } w-[320px] shadow-lg`}
+        className={`fixed top-0 right-0 h-full bg-white z-50 transform transition-transform duration-300 ease-in-out ${visible ? "translate-x-0" : "translate-x-full"
+          } w-[320px] shadow-lg`}
       >
         {/* Close Button */}
         <div className="text-right p-4 border-b">
@@ -105,17 +103,15 @@ const HeaderTop = () => {
         <div className="p-5">
           <div className="flex justify-between border rounded-xl px-6 py-2">
             <a
-              className={`cursor-pointer ${
-                !showCategories ? "text-red-600 font-bold" : ""
-              }`}
+              className={`cursor-pointer ${!showCategories ? "text-red-600 font-bold" : ""
+                }`}
               onClick={() => setShowCategories(false)}
             >
               Menu
             </a>
             <a
-              className={`cursor-pointer ${
-                showCategories ? "text-red-600 font-bold" : ""
-              }`}
+              className={`cursor-pointer ${showCategories ? "text-red-600 font-bold" : ""
+                }`}
               onClick={() => setShowCategories(true)}
             >
               Categories
@@ -137,7 +133,7 @@ const HeaderTop = () => {
                   Shop
                 </Link>
               </li>
-              
+
               <li>
                 <Link to="/contact" onClick={() => setVisible(false)}>
                   Contact
@@ -149,20 +145,18 @@ const HeaderTop = () => {
           {/* Categories List - Hiện khi ở trạng thái Categories */}
           {showCategories && (
             <div
-              className={`flex flex-col gap-2 py-3 ${
-                listCategories.length > 16
-                  ? "max-h-[650px] overflow-y-auto"
-                  : ""
-              }`}
+              className={`flex flex-col gap-2 py-3 ${listCategories.length > 16
+                ? "max-h-[650px] overflow-y-auto"
+                : ""
+                }`}
             >
               {listCategories?.map((item, index) => (
                 <div key={index}>
                   <button
-                    className={`w-full text-left px-4 py-2 flex items-center gap-5 transition ${
-                      activeCategory === item
-                        ? "text-red-600 font-bold" // style khi active
-                        : "hover:text-red-600 text-black" // style mặc định
-                    }`}
+                    className={`w-full text-left px-4 py-2 flex items-center gap-5 transition ${activeCategory === item
+                      ? "text-red-600 font-bold" // style khi active
+                      : "hover:text-red-600 text-black" // style mặc định
+                      }`}
                     onClick={() => handleClick(item)}
                   >
                     <p>{item}</p>

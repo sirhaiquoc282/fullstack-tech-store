@@ -166,7 +166,7 @@ const Products = () => {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiService.getAllProducts();
+      const response = await apiService.getProduct();
       const productsArray = response.data.products || [];
 
       setRows(productsArray.map((product, index) => {

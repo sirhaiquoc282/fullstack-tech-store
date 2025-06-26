@@ -11,15 +11,23 @@ import Contact from "../pages/Contact/Contact";
 import ChangePass from "../pages/ChangePass";
 import Register from "../pages/Register";
 
-import ProfileLayout from "../pages/Profile/ProfileLayout";
-import ProfileDashboard from "../pages/Profile/Dashboard";
-import ProfilePaymentMethods from "../pages/Profile/PaymentMethods";
-import ProfileOrders from "../pages/Profile/Orders";
-import ProfileReturns from "../pages/Profile/Returns";
-import Profile from "../pages/Profile/Profile";
-import ProfileSupport from "../pages/Profile/Support";
-import ProfileAddresses from "../pages/Profile/Addresses";
-import ProfileSettings from "../pages/Profile/Settings";
+import ProfileLayout from "../pages/profile/ProfileLayout";
+import ProfileDashboard from "../pages/profile/Dashboard";
+import ProfilePaymentMethods from "../pages/profile/PaymentMethods";
+import ProfileOrders from "../pages/profile/Orders";
+import ProfileReturns from "../pages/profile/Returns";
+import Profile from "../pages/profile/Profile";
+import ProfileSupport from "../pages/profile/Support";
+import ProfileAddresses from "../pages/profile/Addresses";
+import ProfileSettings from "../pages/profile/Settings";
+
+import AdminLayout from '../admin/AdminLayout';
+import Dashboard from '../admin/pages/Dashboard';
+import Categories from '../admin/pages/Categories';
+import Products from '../admin/pages/Products';
+import AdminLogin from '../admin/pages/AdminLogin';
+import ForgotPassword from '../admin/pages/ForgotPassword';
+import AdminOrders from '../admin/pages/AdminOrders';
 
 const Router = createBrowserRouter([
   {
@@ -154,6 +162,19 @@ const Router = createBrowserRouter([
           </div>
         )
       }
+    ],
+  },
+  { path: '/admin/login', element: <AdminLogin /> },
+  { path: '/admin/forgot', element: <ForgotPassword /> },
+  {
+    path: '/admin',
+    element: <AdminLayout />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: 'categories', element: <Categories /> },
+      { path: 'products', element: <Products /> },
+      { path: 'dashboard', element: <Dashboard /> },
+      { path: 'orders', element: <AdminOrders /> }
     ],
   },
 ]);

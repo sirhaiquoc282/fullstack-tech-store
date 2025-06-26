@@ -6,7 +6,7 @@ import Pagination from "@mui/material/Pagination";
 import { toast } from "react-toastify";
 
 import apiService from "../../service/apiService";
-import BanerLeft from "../../components/Baner/BanerLeft";
+import BanerLeft from "../../components/Banner/BannerLeft";
 import { addToCart, fetchCartAPI } from "../../store/features/CartSlice";
 import { addWishList } from "../../store/features/WishListSlice";
 import { useSearchParams } from "react-router-dom";
@@ -39,7 +39,7 @@ const PageProducts = () => {
   }, [keyword]);
   const productsPerPage = filterProduct.limit;
   const totalPages = Math.ceil(totalProduct / productsPerPage);
-console.log(totalProduct, "totalPages");
+  console.log(totalProduct, "totalPages");
 
   const handleChangeSort = (e) => {
     const [sortBy, order] = e.target.value.split(",");
@@ -57,7 +57,7 @@ console.log(totalProduct, "totalPages");
         skip: (page - 1) * productsPerPage,
       },
     });
-    
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -82,10 +82,10 @@ console.log(totalProduct, "totalPages");
       }
       if (res.status === 200) {
         setProducts(res.data.products);
-        console.log(res.data.products);       
+        console.log(res.data.products);
         setTotalProduct(res.data.total);
       }
-      
+
     } catch (err) {
       console.error("Error fetching products:", err);
     }
@@ -93,7 +93,7 @@ console.log(totalProduct, "totalPages");
 
   useEffect(() => {
     fetchDataProduct();
- 
+
   }, [selectedCategory, JSON.stringify(filterProduct)]);
 
   const handleAddToCart = (product) => {

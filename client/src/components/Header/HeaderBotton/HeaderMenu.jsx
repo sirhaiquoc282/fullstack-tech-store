@@ -5,7 +5,6 @@ const HeaderMenu = () => {
   const listMenu = [
     { title: "Home", to: "/" },
     { title: "Shop", to: "/shop" },
-    // { title: "Sản phẩm", to: "/product" }, // Đã bị thiếu title, nếu muốn dùng thì thêm title
     { title: "Contract", to: "/contact" },
   ];
 

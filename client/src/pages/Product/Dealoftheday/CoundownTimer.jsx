@@ -56,15 +56,11 @@ const CountdownTimer = () => {
 
   return (
     <div className="py-3">
-      <p className="text-xs font-medium text-gray-500 mb-3 text-center">
-        Kết thúc sau
-      </p>
-
       <div className="flex justify-center gap-3">
-        <TimeUnit value={timeLeft.days} label="Ngày" />
-        <TimeUnit value={timeLeft.hours} label="Giờ" />
-        <TimeUnit value={timeLeft.minutes} label="Phút" />
-        <TimeUnit value={timeLeft.seconds} label="Giây" />
+        <TimeUnit value={timeLeft.days} label="Day" />
+        <TimeUnit value={timeLeft.hours} label="Hour" />
+        <TimeUnit value={timeLeft.minutes} label="Minute" />
+        <TimeUnit value={timeLeft.seconds} label="Second" />
       </div>
     </div>
   );
