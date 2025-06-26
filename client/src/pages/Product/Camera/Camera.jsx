@@ -61,7 +61,7 @@ function SamplePrevArrow(props) {
   );
 }
 
-const BestSellers = () => {
+const Camera = () => {
   const settings = {
     dots: true,
     infinite: true,
@@ -151,7 +151,7 @@ const BestSellers = () => {
   if (loading) {
     return (
       <section className="mt-8 lg:mt-10 xl:mt-12 container mx-auto px-4">
-        <h2 className="font-extrabold text-2xl mb-1">BEST SELLERS</h2>
+        <h2 className="font-extrabold text-2xl mb-1">Camera</h2>
         <hr className="mb-6 border-gray-200" />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -183,7 +183,7 @@ const BestSellers = () => {
   if (products.length === 0) {
     return (
       <section className="mt-8 lg:mt-10 xl:mt-12 container mx-auto px-4">
-        <h2 className="font-extrabold text-2xl mb-1">BEST SELLERS</h2>
+        <h2 className="font-extrabold text-2xl mb-1">Camera</h2>
         <hr className="mb-6 border-gray-200" />
         <div className="text-center py-12">
           <p className="text-gray-500">Không có sản phẩm nào</p>
@@ -194,7 +194,7 @@ const BestSellers = () => {
 
   return (
     <section className="mt-8 lg:mt-10 xl:mt-12 container mx-auto px-4">
-      <h2 className="font-extrabold text-2xl mb-1">BEST SELLERS</h2>
+      <h2 className="font-extrabold text-2xl mb-1">Camera</h2>
       <hr className="mb-6 border-gray-200" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
@@ -405,4 +405,4 @@ const BestSellers = () => {
   );
 };
 
-export default BestSellers;
+export default Camera;
