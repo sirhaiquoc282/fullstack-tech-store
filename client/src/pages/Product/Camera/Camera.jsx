@@ -142,7 +142,7 @@ const Camera = () => {
         });
         toast.info("Đã xoá khỏi danh sách yêu thích");
       } else {
-        dispatchispatch(addWishList({ ...product }));
+        dispatch(addWishList({ ...product }));
         toast.success("Đã thêm sản phẩm vào yêu thích");
       }
     };
@@ -295,7 +295,7 @@ const Camera = () => {
                   {/* Thanh chức năng chỉ hiển thị khi hover vào sản phẩm tương ứng */}
                   {activeProduct === item.id && (
                     <div className="absolute top-3 right-3 transition-opacity duration-300">
-                      <ul className="flex flex-col gap-3 bg-white p-2 rounded-lg shadow-lg">
+                      <ul className="flex flex-col gap-3 bg-white p-2 rounded-lg shadow-lg items-center">
                         <li
                           onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
                           className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
@@ -316,30 +316,17 @@ const Camera = () => {
                             />
                           </svg>
                         </li>
-                        <li
-                          onClick={(e) => { e.stopPropagation(); handleAddToWishList(item); }}
-                         className={`${
+                       <li>
+                        <button onClick={() => handleAddToWishList(item)}>
+                          <i
+                            className={`${
                               isInWishList(item.id)
                                 ? "fas fa-heart text-red-600"
                                 : "far fa-heart text-gray-700"
                             } hover:scale-110 transition-all duration-200`}
-                          title="Thêm vào yêu thích"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-5 w-5 text-gray-700 hover:text-red-600"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                            />
-                          </svg>
-                        </li>
+                          ></i>
+                        </button>
+                      </li>
                         <li
                           onClick={(e) => { e.stopPropagation(); navigate(`/product/${item.id}`); }}
                           className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
