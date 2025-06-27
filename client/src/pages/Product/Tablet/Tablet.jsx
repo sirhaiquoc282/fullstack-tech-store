@@ -7,10 +7,10 @@ import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../../../store/features/CartSlice";
-import { addWishList } from "../../../store/features/WishListSlice";
+import { addWishList , deleteWishListItem } from "../../../store/features/WishListSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
+import { fetchWishList } from "../../../store/features/WishListSlice";
 function SampleNextArrow(props) {
     const { onClick } = props;
     return (
@@ -105,29 +105,47 @@ const Tablet = () => {
     const [loading, setLoading] = useState(true);
     const [activeProduct, setActiveProduct] = useState(null);
     const sliderRef = useRef(null);
+  const wishItems = useSelector((state) => state.WishListSlice.wishItems);
 
-    const handleAddToCart = (product) => {
-        if (isLogin) {
-            dispatch(
-                addToCart({
-                    productId: product.id,
-                    quantity: 1,
-                })
-            );
-            toast.success("Đã thêm sản phẩm vào giỏ hàng");
-        } else {
-            navigate("/login");
-        }
+
+   const handleAddToCart = (product) => {
+      if (isLogin) {
+        dispatch(
+          addToCart({
+            productId: product.id,
+            quantity: 1,
+          })
+        ).then(() => {
+          dispatch(fetchCartAPI()); // 👈 cập nhật giỏ hàng
+        });
+        toast.success("Đã thêm sản phẩm vào giỏ hàng");
+      } else {
+        navigate("/login");
+      }
     };
-
+  
+  
+    const isInWishList = (productId) => {
+      return wishItems.some(
+        (item) => item._id === productId || item.id === productId
+      );
+    };
+  
     const handleAddToWishList = (product) => {
-        if (isLogin) {
-            dispatch(addWishList(product));
-            toast.success("Đã thêm sản phẩm vào yêu thích");
-        } else {
-            navigate("/login");
-        }
+      if (!isLogin) return navigate("/login");
+  
+      const isExist = isInWishList(product.id);
+      if (isExist) {
+        dispatch(deleteWishListItem(product.id)).then(() => {
+          dispatch(fetchWishList()); // Cập nhật lại danh sách yêu thích sau khi xoá
+        });
+        toast.info("Đã xoá khỏi danh sách yêu thích");
+      } else {
+        dispatch(addWishList({ ...product }));
+        toast.success("Đã thêm sản phẩm vào yêu thích");
+      }
     };
+
 
     const fetchDataProduct = async () => {
         try {
@@ -270,78 +288,69 @@ const Tablet = () => {
                                     </div>
 
                                     {/* Thanh chức năng chỉ hiển thị khi hover vào sản phẩm tương ứng */}
-                                    {activeProduct === item.id && (
-                                        <div className="absolute top-3 right-3 transition-opacity duration-300">
-                                            <ul className="flex flex-col gap-3 bg-white p-2 rounded-lg shadow-lg">
-                                                <li
-                                                    onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
-                                                    className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-                                                    title="Thêm vào giỏ hàng"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-5 w-5 text-gray-700 hover:text-blue-600"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
-                                                        />
-                                                    </svg>
-                                                </li>
-                                                <li
-                                                    onClick={(e) => { e.stopPropagation(); handleAddToWishList(item); }}
-                                                    className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-                                                    title="Thêm vào yêu thích"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-5 w-5 text-gray-700 hover:text-red-600"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                                                        />
-                                                    </svg>
-                                                </li>
-                                                <li
-                                                    onClick={(e) => { e.stopPropagation(); navigate(`/product/${item.id}`); }}
-                                                    className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
-                                                    title="Xem chi tiết"
-                                                >
-                                                    <svg
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        className="h-5 w-5 text-gray-700 hover:text-green-600"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                                        />
-                                                        <path
-                                                            strokeLinecap="round"
-                                                            strokeLinejoin="round"
-                                                            strokeWidth={2}
-                                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                                        />
-                                                    </svg>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    )}
+                                   {activeProduct === item.id && (
+                    <div className="absolute top-3 right-3 transition-opacity duration-300">
+                      <ul className="flex flex-col gap-3 bg-white p-2 rounded-lg shadow-lg items-center">
+                        <li
+                          onClick={(e) => { e.stopPropagation(); handleAddToCart(item); }}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                          title="Thêm vào giỏ hàng"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-700 hover:text-blue-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                            />
+                          </svg>
+                        </li>
+                       <li>
+                        <button onClick={() => handleAddToWishList(item)}>
+                          <i
+                            className={`${
+                              isInWishList(item.id)
+                                ? "fas fa-heart text-red-600"
+                                : "far fa-heart text-gray-700"
+                            } hover:scale-110 transition-all duration-200`}
+                          ></i>
+                        </button>
+                      </li>
+                        <li
+                          onClick={(e) => { e.stopPropagation(); navigate(`/product/${item.id}`); }}
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                          title="Xem chi tiết"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-5 w-5 text-gray-700 hover:text-green-600"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                            />
+                          </svg>
+                        </li>
+                      </ul>
+                    </div>
+                  )}
 
                                     <div className="mt-3 px-4 pb-4">
                                         <h3
