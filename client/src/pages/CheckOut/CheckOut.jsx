@@ -7,9 +7,10 @@ const CheckOut = () => {
   const location = useLocation();
   const selectedItems = location.state?.selectedItems || []; // Renamed selectItems to selectedItems
   const navigate = useNavigate();
+console.log(selectedItems, "selectedItems");
 
   // Calculate shipping fee and total amount
-  const shippingFee = selectedItems.length > 0 ? 30 : 0; // Shipping fee $30, or $0 if no items
+  const shippingFee = selectedItems.length > 0 ? 300000 : 0; // Shipping fee $30, or $0 if no items
   const subtotal = selectedItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
@@ -315,8 +316,8 @@ const CheckOut = () => {
                     {selectedItems.map((item) => (
                       <tr key={item.id}>
                         <td className="px-4 py-3 whitespace-normal">
-                          <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                          <p className="text-xs text-gray-500">{formatCurrency(item.price)}</p>
+                          <p className="text-sm font-medium text-gray-900">{item.productId.title}</p>
+                          <p className="text-xs text-gray-500">{formatCurrency(item.price*(1-item.productId.discountPercentage))}</p>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700">
                           x {item.quantity}

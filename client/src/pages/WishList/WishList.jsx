@@ -1,20 +1,22 @@
-import React from "react";
+import React , {useEffect}from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { addToCart } from "../../store/features/CartSlice"; // Ensure path is correct
-import { deleteWishList } from "../../store/features/WishListSlice"; // Ensure path is correct
+
 import { useNavigate } from "react-router-dom";
 import { FiXCircle, FiShoppingCart } from "react-icons/fi"; // Import icons for remove and add to cart
 
-const WishList = () => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch(); // Renamed reduxDispatch to dispatch for consistency
-
-  // Access Redux states safely
-  const isLogin = useSelector((state) => state.authenSlice.isLogin);
-  const wishItems = useSelector((state) => state.WishListSlice.wishItems || []); // Ensure it's always an array
-
-  // Helper for currency formatting
+  import {
+    deleteWishListItem,
+    fetchWishList,
+  } from "../../store/features/WishListSlice";
+import { fetchCartAPI } from "../../store/features/CartSlice";
+  const WishList = () => {
+    const isLogin = useSelector((state) => state.authenSlice.isLogin);
+    const wishItems = useSelector((state) => state.WishListSlice.wishItems);
+    const loading = useSelector((state) => state.WishListSlice.loading);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
   const formatCurrency = (amount) => {
     if (typeof amount !== 'number') return 'N/A'; // Handle non-numeric amounts
     return new Intl.NumberFormat("en-US", { // Use en-US for USD
@@ -23,22 +25,40 @@ const WishList = () => {
       minimumFractionDigits: 2,
     }).format(amount);
   };
+    useEffect(() => {
+      if (isLogin) {
+        dispatch(fetchWishList());       
+      }
+    }, [isLogin, dispatch]);
 
-  const handleAddToCart = (product) => {
-    if (!isLogin) {
-      toast.warning("Please login to add products to your cart!", { theme: "colored" });
-      navigate("/login");
-      return;
-    }
-    // Dispatch addToCart action
-    dispatch(addToCart({ ...product, quantity: 1 }));
-    toast.success("Product added to cart successfully!", { theme: "colored" });
-  };
+const handleAddToCart = (product) => {
+  if (isLogin) {
+    dispatch(
+      addToCart({
+        productId: product._id,
+        quantity: 1,
+      })
+    ).then(() => {
+      dispatch(fetchCartAPI()); // 👈 cập nhật giỏ hàng
+    });
+    toast.success("Đã thêm sản phẩm vào giỏ hàng");
+  } else {
+    navigate("/login");
+  }
+};
 
-  const handleDeleteWishList = (product) => {
-    dispatch(deleteWishList(product)); // product should contain the ID or necessary info to delete
-    toast.info("Product removed from wishlist!", { theme: "colored" });
-  };
+   const handleDeleteWishList = (productId) => {
+  dispatch(deleteWishListItem(productId))
+    .unwrap()
+    .then(() => {
+      toast.info("Đã xoá khỏi danh sách yêu thích");
+      // Không cần fetch lại
+    })
+    .catch(() => {
+      toast.error("Lỗi khi xoá khỏi danh sách yêu thích");
+    });
+};
+
 
   // If wishlist is empty or null/undefined, display a message
   if (!wishItems || wishItems.length === 0) {
@@ -91,7 +111,7 @@ const WishList = () => {
                 {/* Delete Button */}
                 <td className="px-4 py-3 text-center">
                   <button
-                    onClick={() => handleDeleteWishList(item)}
+                    onClick={() => handleDeleteWishList(item._id)}
                     className="
                       text-gray-500 hover:text-red-700 transition-colors duration-200
                       p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-red-300

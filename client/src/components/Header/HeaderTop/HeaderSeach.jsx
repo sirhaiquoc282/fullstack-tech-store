@@ -6,9 +6,10 @@ const HeaderSearch = () => {
   const navigate = useNavigate();
 
   const handleSubmit = (e) => {
-    e.preventDefault(); // Ngăn reload trang
+    e.preventDefault();
     if (searchTerm.trim()) {
       navigate(`/shop?q=${encodeURIComponent(searchTerm)}`);
+      setSearchTerm(""); 
     }
   };
 

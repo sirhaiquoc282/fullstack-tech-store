@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 import {
   fetchCartAPI,
   updateCartAPI,
@@ -11,11 +12,13 @@ const Cart = () => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state) => state.cartSlice.cartItems);
   const navigate = useNavigate();
-  const [selectItems, setSelectItems] = useState([]);
+      const isLogin = useSelector((state) => state.authenSlice.isLogin);
+  
+  const [selectedItems, setSelectItems] = useState([]);
 
   useEffect(() => {
     dispatch(fetchCartAPI());
-  }, [dispatch]);
+  }, [isLogin,dispatch]);
 
   useEffect(() => {
     setSelectItems((prev) =>
@@ -28,6 +31,7 @@ const Cart = () => {
     setSelectItems((prev) =>
       prev.filter((i) => i.productId._id !== item.productId._id)
     );
+     toast.info("Đã xoá khỏi danh sách yêu thích");
   };
 
  const handleSelectItem = (item) => {
@@ -61,7 +65,7 @@ const Cart = () => {
     }
   };
 
-  const totalSelectedPrice = selectItems.reduce((acc, item) => {
+  const totalSelectedPrice = selectedItems.reduce((acc, item) => {
     const finalPrice =
       item.productId.price -
       (item.productId.price * item.productId.discountPercentage) / 100;
@@ -69,6 +73,7 @@ const Cart = () => {
   }, 0);
 
   if (!cartItems) return null;
+
 
   return (
     <section className="xl:container mx-auto mt-12 px-4">
@@ -138,7 +143,7 @@ const Cart = () => {
                     <div className="flex gap-3 items-center justify-center">
                       <input
                         type="checkbox"
-                        checked={selectItems.some((i) => i.productId._id === item.productId._id)}
+                        checked={selectedItems.some((i) => i.productId._id === item.productId._id)}
                         onChange={() => handleSelectItem(item)}
                         className="w-5 h-5"
                       />
@@ -167,9 +172,9 @@ const Cart = () => {
         </span>
         <button
           onClick={() =>
-            navigate("/checkout", { state: { selectItems: selectItems } })
+            navigate("/checkout", { state: { selectedItems: selectedItems } })
           }
-          disabled={selectItems.length === 0}
+          disabled={selectedItems.length === 0}
           className="bg-red-600 text-white font-semibold px-6 py-3 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Tiến hành thanh toán

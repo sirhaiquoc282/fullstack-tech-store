@@ -132,7 +132,7 @@ const Smartwatch = () => {
     const fetchDataProduct = async () => {
         try {
             setLoading(true);
-            const res = await apiService.getProduct();
+            const res = await apiService.getProductByCategories("68591fd758f73e651e2a915c");
             if (res.status === 200) {
                 setProducts(res.data.products);
             }

@@ -132,7 +132,7 @@ const Laptop = () => {
     const fetchDataProduct = async () => {
         try {
             setLoading(true);
-            const res = await apiService.getProduct();
+            const res = await apiService.getProductByCategories("684d3dff777dc646bf71c3a8");
             if (res.status === 200) {
                 setProducts(res.data.products);
             }

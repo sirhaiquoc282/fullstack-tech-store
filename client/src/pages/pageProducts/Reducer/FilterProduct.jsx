@@ -5,14 +5,13 @@ export const initialState = {
   q: "",
   order: "",
   sortBy: "",
-  skip: 0, 
+  skip: 0,
 };
 
 export const TYPE_ACITON = {
   CHANGE_SORT: "CHANGE_SORT",
   CHANGE_PAGE: "CHANGE_PAGE",
   CHANGE_SEARCH: "CHANGE_SEARCH",
-  
 };
 
 export const filterproductReducer = (state, action) => {
@@ -30,12 +29,13 @@ export const filterproductReducer = (state, action) => {
         ...state,
         page: action.payload.page,
         skip: action.payload.skip,
-        
       };
     case TYPE_ACITON.CHANGE_SEARCH:
       return {
         ...state,
         q: action.payload,
+        page: 1,
+        skip: 0,
       };
 
     default:

@@ -132,7 +132,7 @@ const Tablet = () => {
     const fetchDataProduct = async () => {
         try {
             setLoading(true);
-            const res = await apiService.getProduct();
+            const res = await apiService.getProductByCategories("684d3e26777dc646bf71c3ae");
             if (res.status === 200) {
                 setProducts(res.data.products);
             }

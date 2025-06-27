@@ -7,9 +7,10 @@ import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../../../store/features/CartSlice";
-import { addWishList } from "../../../store/features/WishListSlice";
+import { addWishList, deleteWishListItem } from "../../../store/features/WishListSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { fetchWishList } from "../../../store/features/WishListSlice";
 
 function SampleNextArrow(props) {
   const { onClick } = props;
@@ -105,34 +106,52 @@ const Camera = () => {
   const [loading, setLoading] = useState(true);
   const [activeProduct, setActiveProduct] = useState(null);
   const sliderRef = useRef(null);
+  const wishItems = useSelector((state) => state.WishListSlice.wishItems);
 
-  const handleAddToCart = (product) => {
-    if (isLogin) {
-      dispatch(
-        addToCart({
-          productId: product.id,
-          quantity: 1,
-        })
+
+   const handleAddToCart = (product) => {
+      if (isLogin) {
+        dispatch(
+          addToCart({
+            productId: product.id,
+            quantity: 1,
+          })
+        ).then(() => {
+          dispatch(fetchCartAPI()); // 👈 cập nhật giỏ hàng
+        });
+        toast.success("Đã thêm sản phẩm vào giỏ hàng");
+      } else {
+        navigate("/login");
+      }
+    };
+  
+  
+    const isInWishList = (productId) => {
+      return wishItems.some(
+        (item) => item._id === productId || item.id === productId
       );
-      toast.success("Đã thêm sản phẩm vào giỏ hàng");
-    } else {
-      navigate("/login");
-    }
-  };
-
-  const handleAddToWishList = (product) => {
-    if (isLogin) {
-      dispatch(addWishList(product));
-      toast.success("Đã thêm sản phẩm vào yêu thích");
-    } else {
-      navigate("/login");
-    }
-  };
+    };
+  
+    const handleAddToWishList = (product) => {
+      if (!isLogin) return navigate("/login");
+  
+      const isExist = isInWishList(product.id);
+      if (isExist) {
+        dispatch(deleteWishListItem(product.id)).then(() => {
+          dispatch(fetchWishList()); // Cập nhật lại danh sách yêu thích sau khi xoá
+        });
+        toast.info("Đã xoá khỏi danh sách yêu thích");
+      } else {
+        dispatchispatch(addWishList({ ...product }));
+        toast.success("Đã thêm sản phẩm vào yêu thích");
+      }
+    };
 
   const fetchDataProduct = async () => {
     try {
       setLoading(true);
-      const res = await apiService.getProduct();
+      const res = await apiService.getProductByCategories("684d3e77777dc646bf71c3b4");
+      
       if (res.status === 200) {
         setProducts(res.data.products);
       }
@@ -145,7 +164,11 @@ const Camera = () => {
 
   useEffect(() => {
     fetchDataProduct();
+ 
+    
   }, []);
+
+  
 
   // Hiển thị skeleton loading khi đang tải dữ liệu
   if (loading) {
@@ -295,7 +318,11 @@ const Camera = () => {
                         </li>
                         <li
                           onClick={(e) => { e.stopPropagation(); handleAddToWishList(item); }}
-                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                         className={`${
+                              isInWishList(item.id)
+                                ? "fas fa-heart text-red-600"
+                                : "far fa-heart text-gray-700"
+                            } hover:scale-110 transition-all duration-200`}
                           title="Thêm vào yêu thích"
                         >
                           <svg
@@ -346,11 +373,11 @@ const Camera = () => {
                   <div className="mt-3 px-4 pb-4">
                     <h3
                       onClick={() => navigate(`/product/${item.id}`)}
-                      className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer"
+                      className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer line-clamp-2"
                     >
                       {item.title}
                     </h3>
-                    <p className="text-xs text-gray-600 line-clamp-2 mt-1 h-10">
+                    <p className="text-xs text-gray-600 line-clamp-2 mt-1 h-10 ">
                       {item.description}
                     </p>
 

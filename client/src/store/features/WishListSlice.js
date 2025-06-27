@@ -1,35 +1,91 @@
-import { createSlice } from "@reduxjs/toolkit";
+// store/features/WishListSlice.js
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import axiosInstance from "../axiosInstance";
+
+// Lấy danh sách yêu thích từ API
+export const fetchWishList = createAsyncThunk(
+  "wishlist/fetch",
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.get("/wishlist/");
+      return res.data.products; // ✅ CHỈ lấy mảng sản phẩm
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Lỗi khi fetch wishlist"
+      );
+    }
+  }
+);
+
+// Thêm sản phẩm vào yêu thích
+export const addWishList = createAsyncThunk(
+  "wishlist/add",
+  async (product, { rejectWithValue }) => {
+    try {
+      const res = await axiosInstance.put("/wishlist/", {
+        productId: product.id,
+      });
+      return product;
+    } catch (err) {
+      return rejectWithValue("Thêm sản phẩm vào yêu thích thất bại");
+    }
+  }
+);
+
+// Xoá sản phẩm khỏi yêu thích
+export const deleteWishListItem = createAsyncThunk(
+  "wishlist/delete",
+  async (productId, { rejectWithValue }) => {
+    try {
+      await axiosInstance.delete(`/wishlist/${productId}`);
+      return productId;
+    } catch (err) {
+      return rejectWithValue("Xoá sản phẩm khỏi yêu thích thất bại");
+    }
+  }
+);
 
 const initialState = {
-  wishItems: [], // đúng tên biến đang dùng
+  wishItems: [],
+  loading: false,
+  error: null,
 };
 
-export const wishListSlice = createSlice({
-  name: "wishListSlice",
+const wishListSlice = createSlice({
+  name: "WishListSlice",
   initialState,
-  reducers: {
-    addWishList: (state, action) => {
-      const { payload } = action;
-      const isExist = state.wishItems.some((item) => item.id === payload.id);
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchWishList.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchWishList.fulfilled, (state, action) => {
+        state.loading = false;
+        state.wishItems = action.payload || [];
+      })
+      .addCase(fetchWishList.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
 
-      if (!isExist) {
-        state.wishItems.push(payload);
-      }
-      // nếu sản phẩm đã tồn tại thì không thêm nữa
-    },
-    deleteWishList: (state, action) => {
-      const { payload } = action;
-      const { wishItems } = state;
-      const updateWish = wishItems.filter(
-        (item) => item.id != action.payload.id
-      );
-      return {
-        ...state,
-        wishItems: updateWish,
-      };
-    },
+      .addCase(addWishList.fulfilled, (state, action) => {
+        const exists = state.wishItems.some(
+          (item) => item.id === action.payload.id
+        );
+        if (!exists) {
+          state.wishItems.push(action.payload);
+        }
+      })
+
+      .addCase(deleteWishListItem.fulfilled, (state, action) => {
+        const productId = action.payload;
+        state.wishItems = state.wishItems.filter(
+          (item) => item.id !== productId && item._id !== productId
+        );
+      });
   },
 });
 
-export const { addWishList, deleteWishList } = wishListSlice.actions;
 export default wishListSlice.reducer;

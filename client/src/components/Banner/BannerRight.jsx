@@ -82,20 +82,19 @@ const BannerRight = () => {
 
   return (
     <div className="
-      relative lg:col-span-3 w-full
+      relative lg:col-span-3 w-full 
       aspect-[690/300] /* Use aspect ratio to maintain original image proportion */
       overflow-hidden rounded-lg shadow /* Apply consistent styling */
     ">
-      <img
+      <img   
+        onClick={() => navigate("/shop")}
+
         src={currentBanner.src}
         alt={currentBanner.alt}
-        // Image now takes full width and height of its parent div (which has the aspect ratio)
-        // object-cover ensures it fills the space while maintaining aspect ratio, potentially cropping
-        className="w-full h-full object-cover"
+
+        className="w-full h-full object-contain cursor-pointer"
       />
 
-      {/* Navigation Arrows Buttons with circular, semi-transparent background */}
-      {/* Positioned absolutely on top of the image */}
       <button
         onClick={goToPrev}
         className="absolute left-3 top-1/2 -translate-y-1/2

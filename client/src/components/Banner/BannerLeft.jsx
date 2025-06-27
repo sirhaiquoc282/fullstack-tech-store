@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import apiService from "../../service/apiService";
 // Updated imports for different icons, now using Font Awesome (Fa) icons
 import {
   FaList,        // Replaced FiList
@@ -14,6 +15,8 @@ import {
 const BannerLeft = () => {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState(null);
+const [listCategories, setListCategories] = useState([]);
+  const [searchParams] = useSearchParams();
 
   const categories = [
     { id: 'laptop', name: 'Laptops', slug: 'laptop', icon: FaLaptop }, // Using FaLaptop
@@ -22,12 +25,35 @@ const BannerLeft = () => {
     { id: 'smartwatch', name: 'Smartwatches', slug: 'smartwatch', icon: FaClock }, // Using FaClock
     { id: 'camera', name: 'Cameras', slug: 'camera', icon: FaCamera }, // Using FaCamera
   ];
+useEffect(() => {
+    const fetchListProduct = async () => {
+      const res = await apiService.getListCategories();
+      if (res.status === 200) {
+        setListCategories(res.data);
+      }
+    };
 
-  const handleClick = (item) => {
-    setActiveCategory(item.slug);
-    console.log(`Navigating to /shop with category: ${item.name} (ID: ${item.id})`);
-    navigate("/shop", { state: { categoryId: item.id } });
-  };
+    fetchListProduct();
+  }, []);
+  console.log(listCategories, "lisssss");
+  
+const handleClick = (item) => {
+  setActiveCategory(item.slug);
+
+  // Tìm trong listCategories phần tử có slug trùng với item.slug
+  const matchedCategory = listCategories.find(
+    (cat) => cat.slug === item.slug || cat.title.toLowerCase() === item.name.toLowerCase()
+  );
+
+  const realCategoryId = matchedCategory ? matchedCategory.id : item.id;
+
+ const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("category", realCategoryId); 
+    newSearchParams.delete("q"); // Nếu chọn category thì bỏ tìm kiếm
+    newSearchParams.set("page", 1); // Reset về page 1
+    navigate(`/shop?${newSearchParams.toString()}`);
+};
+
 
   return (
     <div className="
