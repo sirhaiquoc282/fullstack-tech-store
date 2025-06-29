@@ -2,13 +2,33 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { FiShoppingCart, FiStar } from "react-icons/fi"; // Import icons for cart and star ratings
-
+import { toast } from "react-toastify";
 import CountdownTimer from "./CoundownTimer"; // Assuming this component is also translated or handles its own language
+import { useDispatch , useSelector} from "react-redux";
+import { fetchCartAPI } from "../../../store/features/CartSlice";
+import { addToCart } from "../../../store/features/CartSlice";
 
 const BoxProductDeal = ({ item }) => {
   const [mainImg, setMainImg] = useState(item.thumbnail);
-  const navigate = useNavigate();
+    const isLogin = useSelector((state) => state.authenSlice.isLogin);
 
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+    const handleAddToCart = (product) => {
+       if (isLogin) {
+         dispatch(
+           addToCart({
+             productId: product.id,
+             quantity: 1,
+           })
+         ).then(() => {
+           dispatch(fetchCartAPI()); // 👈 cập nhật giỏ hàng
+         });
+         toast.success("Đã thêm sản phẩm vào giỏ hàng");
+       } else {
+         navigate("/login");
+       }
+     };
   // Mock data for sold count and percentage
   const soldCount = Math.floor(Math.random() * 50) + 10;
   const soldPercentage = Math.floor(Math.random() * 60) + 40; // Represents percentage sold
@@ -124,10 +144,10 @@ const BoxProductDeal = ({ item }) => {
 
           {/* Add to Cart Button */}
           <button
+          onClick={()=>handleAddToCart(item)}
             className="bg-gray-100 hover:bg-red-600 text-gray-600 hover:text-white w-8 h-8 rounded-full flex items-center justify-center transition-colors"
             aria-label="Add to cart"
-          // You'll need to add onClick handler for addToCart action here
-          // e.g., onClick={() => handleAddToCart(item)}
+
           >
             <FiShoppingCart className="text-sm" /> {/* Replaced Font Awesome with FiShoppingCart */}
           </button>

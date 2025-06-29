@@ -11,7 +11,7 @@ import {
 
 const ProfileLayout = () => {
     const [form, setForm] = useState({
-        name: "Nguyen Hai Quoc",
+        name: localStorage.getItem("username"),
         avatar: null
     });
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -36,15 +36,11 @@ const ProfileLayout = () => {
 
     const handleLogout = async () => {
         try {
-            // Có thể gọi API logout ở đây nếu backend của bạn có endpoint logout
-            // Ví dụ: await axios.post("http://localhost:5000/api/auth/logout");
-
             dispatch(doLogout()); // Dispatch Redux action để cập nhật trạng thái login
 
             // Xóa thông tin người dùng khỏi localStorage
             localStorage.removeItem("accessToken");
             localStorage.removeItem("username");
-            // localStorage.removeItem("userEmail"); // Nếu bạn có lưu email
 
             toast.success("Đăng xuất thành công!", { theme: "colored" }); // Thông báo thành công
             navigate("/login"); // Điều hướng về trang đăng nhập
@@ -110,7 +106,7 @@ const ProfileLayout = () => {
                                 />
                             ) : (
                                 <div className="bg-red-600 w-full h-full rounded-full flex items-center justify-center text-white text-3xl font-bold">
-                                    {form.name.charAt(0)}
+                                    {form.name.charAt(0).toLocaleUpperCase()}
                                 </div>
                             )}
                         </div>

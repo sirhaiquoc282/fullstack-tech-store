@@ -11,6 +11,7 @@ import { addWishList, deleteWishListItem } from "../../../store/features/WishLis
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { fetchWishList } from "../../../store/features/WishListSlice";
+import { fetchCartAPI } from "../../../store/features/CartSlice";
 
 function SampleNextArrow(props) {
     const { onClick } = props;
@@ -356,7 +357,7 @@ const Laptop = () => {
                                     <div className="mt-3 px-4 pb-4">
                                         <h3
                                             onClick={() => navigate(`/product/${item.id}`)}
-                                            className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer"
+                                            className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer line-clamp-1"
                                         >
                                             {item.title}
                                         </h3>

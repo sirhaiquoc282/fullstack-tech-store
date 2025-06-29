@@ -123,7 +123,7 @@ const handleAddToCart = (product) => {
                 </td>
                 {/* Product Info */}
                 <td className="px-4 py-3 whitespace-normal"> {/* allow text to wrap */}
-                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/product/${item.id}`)}>
+                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate(`/product/${item._id}`)}>
                     <img
                       src={item.images && item.images.length > 0 ? item.images[0] : 'placeholder.jpg'} // Use first image, add fallback
                       alt={item.title}

@@ -14,6 +14,7 @@ import {
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { fetchWishList } from "../../../store/features/WishListSlice";
+import { fetchCartAPI } from "../../../store/features/CartSlice";
 function SampleNextArrow(props) {
   const { onClick } = props;
   return (

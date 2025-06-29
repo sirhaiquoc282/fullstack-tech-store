@@ -31,7 +31,7 @@ const Cart = () => {
     setSelectItems((prev) =>
       prev.filter((i) => i.productId._id !== item.productId._id)
     );
-     toast.info("Đã xoá khỏi danh sách yêu thích");
+     toast.info("Đã xoá sản phẩm khỏi giỏ hàng");
   };
 
  const handleSelectItem = (item) => {
