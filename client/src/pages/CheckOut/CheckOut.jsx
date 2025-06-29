@@ -10,7 +10,7 @@ const CheckOut = () => {
 console.log(selectedItems, "selectedItems");
 
   // Calculate shipping fee and total amount
-  const shippingFee = selectedItems.length > 0 ? 300000 : 0; // Shipping fee $30, or $0 if no items
+  const shippingFee = selectedItems.length > 0 ? 50000 : 0; // Shipping fee $30, or $0 if no items
   const subtotal = selectedItems.reduce(
     (acc, item) => acc + item.price * item.quantity,
     0
@@ -118,13 +118,14 @@ console.log(selectedItems, "selectedItems");
   };
 
   // Format currency to USD (example)
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("en-US", { // Changed to en-US for USD
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2, // USD typically uses 2 decimal places
-    }).format(amount);
-  };
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+    minimumFractionDigits: 0, // VNĐ không dùng phần thập phân
+  }).format(amount);
+};
+
 
   return (
     <section className="
@@ -339,7 +340,7 @@ console.log(selectedItems, "selectedItems");
               <span>{formatCurrency(subtotal)}</span>
             </div>
             <div className="flex justify-between text-gray-700">
-              <span>Shipping Fee</span>
+              <span>Shipping</span>
               <span>{formatCurrency(shippingFee)}</span>
             </div>
           </div>

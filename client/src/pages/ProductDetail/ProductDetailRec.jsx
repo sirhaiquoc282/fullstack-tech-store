@@ -8,7 +8,9 @@ import { useDispatch, useSelector } from "react-redux";
 import { addToCart } from "../../store/features/CartSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-
+import { addWishList, deleteWishListItem } from "../../store/features/WishListSlice";
+import { fetchWishList } from "../../store/features/WishListSlice";
+import { fetchCartAPI } from "../../store/features/CartSlice";
 function SampleNextArrow(props) {
   const { onClick } = props;
   return (
@@ -74,6 +76,7 @@ const ProductDetailRec = ({ data }) => {
   const navigate = useNavigate();
   const isLogin = useSelector((state) => state.authenSlice.isLogin);
 
+  const wishItems = useSelector((state) => state.WishListSlice.wishItems);
 
   const dispatch = useDispatch();
   const handleAddToCart = (product) => {
@@ -83,12 +86,36 @@ const ProductDetailRec = ({ data }) => {
           productId: product.id,
           quantity: 1,
         })
-      );
+      ).then(() => {
+        dispatch(fetchCartAPI()); // 👈 cập nhật giỏ hàng
+      });
       toast.success("Đã thêm sản phẩm vào giỏ hàng");
     } else {
       navigate("/login");
     }
   };
+
+  const isInWishList = (productId) => {
+    return wishItems.some(
+      (item) => item._id === productId || item.id === productId
+    );
+  };
+
+  const handleAddToWishList = (product) => {
+    if (!isLogin) return navigate("/login");
+
+    const isExist = isInWishList(product.id);
+    if (isExist) {
+      dispatch(deleteWishListItem(product.id)).then(() => {
+        dispatch(fetchWishList()); // Cập nhật lại danh sách yêu thích sau khi xoá
+      });
+      toast.info("Đã xoá khỏi danh sách yêu thích");
+    } else {
+      dispatch(addWishList({ ...product }));
+      toast.success("Đã thêm sản phẩm vào yêu thích");
+    }
+  };
+
   return (
     <div className="mt-8 lg:mt-10 xl:mt-12 mx-auto">
       <h2 className="font-bold text-2xl mb-1">Sản Phẩm Liên Quan</h2>
@@ -124,7 +151,15 @@ const ProductDetailRec = ({ data }) => {
                       </button>
                     </li>
                     <li>
-                      <i className="far fa-heart text-gray-700 hover:text-red-600 hover:scale-110 cursor-pointer"></i>
+                     <button onClick={() => handleAddToWishList(item)}>
+                            <i
+                              className={`${
+                                isInWishList(item.id)
+                                  ? "fas fa-heart text-red-600"
+                                  : "far fa-heart text-gray-700"
+                              } hover:scale-110 transition-all duration-200`}
+                            ></i>
+                          </button>
                     </li>
                     <li>
                       <i className="far fa-eye text-gray-700 hover:text-red-600 hover:scale-110 cursor-pointer"></i>

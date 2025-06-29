@@ -25,7 +25,7 @@ const ProductDetailTop = () => {
 
   const accessToken = localStorage.getItem("accessToken");
   const name = localStorage.getItem("username");
-
+  
   useEffect(() => {
     if (id) {
       if (divref) {
@@ -144,7 +144,8 @@ const ProductDetailTop = () => {
       );
     }
   };
-
+  console.log(dataDetail, "data");
+  
   return dataDetail ? (
     <section className="containermb xl:container mt-12">
       <div ref={divref} className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -179,7 +180,7 @@ const ProductDetailTop = () => {
         <div>
           <div>
             <p className="text-sm text-gray-500 s tracking-wider">
-              Categories: {dataDetail.tags[1].toUpperCase()}
+              Categories: {dataDetail.tags[1]?.toUpperCase()}
             </p>
             <h4 className="text-2xl font-bold tracking-wider mt-3">
               {dataDetail.title}

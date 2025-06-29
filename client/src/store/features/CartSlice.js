@@ -9,8 +9,6 @@ export const fetchCartAPI = createAsyncThunk("cart/fetch", async () => {
 });
 
 export const addToCart = createAsyncThunk("cart/add", async (product) => {
-  
-
   const response = await axiosInstance.post("/cart/", product);
   return response.data;
 });
@@ -26,7 +24,6 @@ export const updateCartAPI = createAsyncThunk(
     return response.data.cart.products;
   }
 );
-
 
 export const deleteCartAPI = createAsyncThunk(
   "cart/delete",
@@ -50,9 +47,13 @@ const cartSlice = createSlice({
         state.loading = true;
       })
       .addCase(fetchCartAPI.fulfilled, (state, action) => {
-        state.cartItems = action.payload;
+        // Chỉ giữ lại những sản phẩm còn tồn tại
+        state.cartItems = action.payload.filter(
+          (item) => item.productId && item.productId._id
+        );
         state.loading = false;
       })
+
       .addCase(fetchCartAPI.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
@@ -69,15 +70,14 @@ const cartSlice = createSlice({
         }
       })
       .addCase(updateCartAPI.fulfilled, (state, action) => {
-  const updatedCart = action.payload; // Đây là mảng products
-  state.cartItems = updatedCart;
-})
-
+        const updatedCart = action.payload; // Đây là mảng products
+        state.cartItems = updatedCart;
+      })
 
       .addCase(deleteCartAPI.fulfilled, (state, action) => {
         const deletedProductId = action.payload;
         state.cartItems = state.cartItems.filter(
-          (item) => item.productId._id !== deletedProductId
+          (item) => item.productId && item.productId._id !== action.payload
         );
       });
   },

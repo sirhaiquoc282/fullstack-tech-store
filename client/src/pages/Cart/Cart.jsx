@@ -12,13 +12,13 @@ const Cart = () => {
   const dispatch = useDispatch();
   const cartItems = useSelector((state) => state.cartSlice.cartItems);
   const navigate = useNavigate();
-      const isLogin = useSelector((state) => state.authenSlice.isLogin);
-  
+  const isLogin = useSelector((state) => state.authenSlice.isLogin);
+
   const [selectedItems, setSelectItems] = useState([]);
 
   useEffect(() => {
     dispatch(fetchCartAPI());
-  }, [isLogin,dispatch]);
+  }, [isLogin, dispatch]);
 
   useEffect(() => {
     setSelectItems((prev) =>
@@ -27,23 +27,26 @@ const Cart = () => {
   }, [cartItems]);
 
   const handleDeleteCart = (item) => {
+    if (!item?.productId?._id) return;
+
     dispatch(deleteCartAPI(item.productId._id));
     setSelectItems((prev) =>
-      prev.filter((i) => i.productId._id !== item.productId._id)
+      prev.filter((i) => i.productId?._id !== item.productId._id)
     );
-     toast.info("Đã xoá sản phẩm khỏi giỏ hàng");
+    toast.info("Đã xoá sản phẩm khỏi giỏ hàng");
   };
 
- const handleSelectItem = (item) => {
-  const productId = item.productId._id;
-  setSelectItems((prev) => {
-    const exists = prev.find((i) => i.productId._id === productId);
-    return exists
-      ? prev.filter((i) => i.productId._id !== productId)
-      : [...prev, item];
-  });
-};
+  const handleSelectItem = (item) => {
+    if (!item?.productId?._id) return;
 
+    const productId = item.productId._id;
+    setSelectItems((prev) => {
+      const exists = prev.find((i) => i.productId?._id === productId);
+      return exists
+        ? prev.filter((i) => i.productId?._id !== productId)
+        : [...prev, item];
+    });
+  };
 
   const increaseQuantity = (item) => {
     dispatch(
@@ -74,10 +77,11 @@ const Cart = () => {
 
   if (!cartItems) return null;
 
-
   return (
     <section className="xl:container mx-auto mt-12 px-4">
-      <h2 className="text-2xl font-bold mb-6 text-center">🛒 Giỏ Hàng của bạn</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">
+        🛒 Giỏ Hàng của bạn
+      </h2>
 
       <div className="w-full overflow-x-auto rounded-xl shadow">
         <table className="w-full min-w-[700px] border border-gray-200 text-left bg-white">
@@ -94,7 +98,8 @@ const Cart = () => {
             {cartItems?.map((item, index) => {
               const finalPrice =
                 item.productId?.price -
-                (item.productId?.price * item.productId?.discountPercentage) / 100;
+                (item.productId?.price * item.productId?.discountPercentage) /
+                  100;
               return (
                 <tr key={index} className="hover:bg-gray-50 text-gray-700">
                   <td className="p-3 border-y border-gray-200">
@@ -105,7 +110,9 @@ const Cart = () => {
                         className="w-14 h-14 object-contain border rounded-lg"
                       />
                       <button
-                        onClick={() => navigate(`/product/${item.productId._id}`)}
+                        onClick={() =>
+                          navigate(`/product/${item.productId._id}`)
+                        }
                         className="hover:text-red-600 max-w-[160px] font-medium text-blue-700 line-clamp-2"
                       >
                         {item.productId?.description}
@@ -143,10 +150,13 @@ const Cart = () => {
                     <div className="flex gap-3 items-center justify-center">
                       <input
                         type="checkbox"
-                        checked={selectedItems.some((i) => i.productId._id === item.productId._id)}
+                        checked={selectedItems.some(
+                          (i) => i.productId?._id === item.productId?._id
+                        )}
                         onChange={() => handleSelectItem(item)}
                         className="w-5 h-5"
                       />
+
                       <button
                         onClick={() => handleDeleteCart(item)}
                         className="text-gray-500 hover:text-red-600 font-bold"
