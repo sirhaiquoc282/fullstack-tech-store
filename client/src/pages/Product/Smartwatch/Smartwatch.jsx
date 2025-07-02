@@ -278,7 +278,7 @@ const Smartwatch = () => {
                     <img
                       src={item.images[0]}
                       alt={item.title}
-                      className="w-full h-full object-contain p-5 transition-all duration-500"
+                      className="w-full h-full object-contain p-5 transition-all duration-500 line-clamp-1"
                     />
 
                     {/* Badge giảm giá */}

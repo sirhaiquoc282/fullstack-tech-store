@@ -334,7 +334,7 @@ const Smartphone = () => {
                             e.stopPropagation();
                             navigate(`/product/${item.id}`);
                           }}
-                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer"
+                          className="p-2 rounded-full hover:bg-gray-100 transition-colors cursor-pointer "
                           title="Xem chi tiết"
                         >
                           <svg
@@ -365,7 +365,7 @@ const Smartphone = () => {
                   <div className="mt-3 px-4 pb-4">
                     <h3
                       onClick={() => navigate(`/product/${item.id}`)}
-                      className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer"
+                      className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer line-clamp-1"
                     >
                       {item.title}
                     </h3>

@@ -279,7 +279,7 @@ const Tablet = () => {
                     <img
                       src={item.images[0]}
                       alt={item.title}
-                      className="w-full h-full object-contain p-5 transition-all duration-500"
+                      className="w-full h-full object-contain p-5 transition-all duration-500 "
                     />
 
                     {/* Badge giảm giá */}
@@ -364,7 +364,7 @@ const Tablet = () => {
                   <div className="mt-3 px-4 pb-4">
                     <h3
                       onClick={() => navigate(`/product/${item.id}`)}
-                      className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer"
+                      className="text-sm font-semibold hover:text-blue-600 transition-colors cursor-pointer line-clamp-1"
                     >
                       {item.title}
                     </h3>
