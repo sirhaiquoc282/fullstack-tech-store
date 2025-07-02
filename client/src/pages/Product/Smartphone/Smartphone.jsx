@@ -221,9 +221,9 @@ const Smartphone = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
         {/* Card lớn: Smartphone */}
-        {products[7] && (
+        {products[1] && (
           <div
-            onClick={() => navigate(`/product/${products[7].id}`)}
+            onClick={() => navigate(`/product/${products[1].id}`)}
             className="col-span-1 sm:col-span-2 relative overflow-hidden rounded-xl group cursor-pointer
               border border-gray-100 shadow-sm hover:shadow-lg transition-shadow duration-300
               bg-white" // Đổi màu nền thành trắng
@@ -243,13 +243,13 @@ const Smartphone = () => {
               <div className="w-40 sm:w-56 absolute top-16 sm:top-24 -right-5 transform group-hover:scale-105 transition-transform duration-500">
                 <img
                   className="w-full h-full object-contain drop-shadow-lg"
-                  src={products[7]?.images[2]}
+                  src={products[1]?.images[2]}
                   alt=""
                 />
               </div>
               <div className="text-black absolute top-28 sm:top-40 left-6 sm:left-14 max-w-[70%]">
                 <h3 className="text-2xl sm:text-3xl font-bold tracking-wider group-hover:translate-x-2 transition-transform">
-                  {products[7]?.title}
+                  {products[1]?.title}
                 </h3>
                 <p className="mt-8 sm:mt-16 text-xs sm:text-sm opacity-80 group-hover:opacity-100 transition-opacity">
                   {products[7]?.description.substring(0, 100)}...
