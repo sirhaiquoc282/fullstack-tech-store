@@ -354,7 +354,7 @@ const ProductDetailTop = () => {
       </div> */}
 
       {/* INFORMATION */}
-      <div className="mt-4 border-[1px] border-gray-400 rounded-lg">
+      {/* <div className="mt-4 border-[1px] border-gray-400 rounded-lg">
         <h5 className="bg-gray-100 px-4 py-3 font-semibold text-2xl rounded-t-md text-gray-600">
           Product infomation
         </h5>
@@ -384,7 +384,7 @@ const ProductDetailTop = () => {
             <span className="text-base text-gray-700">China</span>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* REVIEWS */}
       <div className="mt-4 border-[1px] border-gray-400 rounded-lg">

@@ -90,10 +90,10 @@ console.log(selectedItems, "selectedItems");
       });
 
       toast.success(
-        "Thank you for your order! Your order will be delivered as soon as possible.",
+        "Cảm ơn bạn đã đặt hàng! Chúng sẽ giao hàng cho bạn trong thời gian sớm nhất <3",
         {
-          position: "top-center",
-          autoClose: 3000,
+          position: "top-right",
+          autoClose: 500,
           theme: "colored",
         }
       );
@@ -107,11 +107,11 @@ console.log(selectedItems, "selectedItems");
         paymentMethod: "cod",
       });
       // Navigate to order confirmation page
-      navigate("/order-confirmation");
+      navigate("/");
     } else {
-      toast.error("Please review your information. There are errors in the form!", {
-        position: "top-center",
-        autoClose: 3000,
+      toast.error("Vui lòng nhập thông tin !", {
+        position: "top-right",
+        autoClose: 500,
         theme: "colored",
       });
     }

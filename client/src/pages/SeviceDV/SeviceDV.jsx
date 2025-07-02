@@ -56,7 +56,7 @@ const ServiceDV = () => {
               shadow-sm                // Giảm độ đổ bóng
               hover:shadow-md          // Hiệu ứng hover nhẹ hơn
               transition-shadow duration-300 ease-in-out // Chỉ áp dụng transition cho shadow
-              cursor-pointer
+
               group
               xl:min-w-0
               xl:col-span-1
