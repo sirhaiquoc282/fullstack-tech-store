@@ -375,7 +375,7 @@ const Smartphone = () => {
 
                     <div className="mt-3 flex items-center justify-between">
                       <div>
-                        <span className="text-red-600 font-bold">
+                        <span className="text-red-600 font-bold flex">
                           {(
                             item.price -
                             (item.price * item.discountPercentage) / 100

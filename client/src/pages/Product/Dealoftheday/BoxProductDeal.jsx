@@ -96,7 +96,7 @@ const BoxProductDeal = ({ item }) => {
       <div className="p-4 border-t border-gray-100">
         <a
           onClick={() => navigate(`/product/${item.id}`)}
-          className="block cursor-pointer font-bold text-gray-800 hover:text-red-600 text-base mb-2 line-clamp-2 transition-colors"
+          className=" cursor-pointer font-bold text-gray-800 hover:text-red-600 text-base mb-2 line-clamp-1 transition-colors "
         >
           {item.title}
         </a>
