@@ -121,7 +121,8 @@ const Products = () => {
   const [imageUploadError, setImageUploadError] = useState('');
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
-
+  const [deletingId, setDeletingId] = useState(''); // Để theo dõi sản phẩm đang được xóa
+  
   // --- CONSTANTS & CONFIG ---
   const REQUIRED_FIELDS = ['title', 'price', 'category', 'brand', 'stock', 'sku', 'description'];
   const DEFAULT_FORM_STATE = {
@@ -166,11 +167,11 @@ const Products = () => {
   const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiService.getProduct();
+      const response = await apiService.getAllProducts();
       const productsArray = response.data.products || [];
 
       setRows(productsArray.map((product, index) => {
-        const id = product._id || `${product.sku || 'no-sku'}-${index}-${Math.random().toString(36).substr(2, 9)}`;
+        const id = product.id
 
         let resolvedCategoryName = 'N/A';
         if (product.category) {
@@ -326,90 +327,92 @@ const Products = () => {
     setImageFiles(prev => [...prev, ...selectedFiles]);
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) {
-      setSnackbar({ open: true, message: 'Please fill in all required fields and correct errors.', severity: 'warning' });
-      return;
+const handleSubmit = async () => {
+  if (!validateForm()) {
+    setSnackbar({ open: true, message: 'Please fill in all required fields and correct the errors.', severity: 'error' });
+    return;
+  }
+
+  setLoading(true);
+  setImageUploadError('');
+
+  try {
+    let finalThumbnailUrl = thumbnailUrl;
+    let finalImageUrls = [...imageUrls];
+
+    // Step 1: Upload Thumbnail
+    if (thumbnailFile) {
+      const formData = new FormData();
+      formData.append('images', thumbnailFile);
+      console.log("Uploading thumbnail...");
+      const uploadRes = await apiService.uploadImages(formData);
+      console.log("Thumbnail upload response:", uploadRes); // THÊM DÒNG NÀY
+      console.log("Thumbnail upload data:", uploadRes.data); // THÊM DÒNG NÀY
+      if (uploadRes.data && uploadRes.data.length > 0) {
+        finalThumbnailUrl = uploadRes.data[0];
+        console.log("Assigned thumbnail URL:", finalThumbnailUrl); // THÊM DÒNG NÀY
+      } else {
+        throw new Error("Failed to upload thumbnail: No URLs returned.");
+      }
     }
 
-    setLoading(true);
-    try {
-      let finalThumbnailUrl = thumbnailUrl;
-      let finalImageUrls = [...imageUrls];
-
-      const filesToUpload = [];
-      let newThumbnailFileIndex = -1;
-
-      if (thumbnailFile) {
-        filesToUpload.push(thumbnailFile);
-        newThumbnailFileIndex = 0;
-      }
-      filesToUpload.push(...imageFiles);
-
-      if (filesToUpload.length > 0) {
-        const formData = new FormData();
-        filesToUpload.forEach(file => formData.append('images', file));
-        const uploadedUrls = await apiService.uploadImages(formData);
-
-        let uploadedIndex = 0;
-        if (newThumbnailFileIndex !== -1 && uploadedUrls[uploadedIndex]) {
-          finalThumbnailUrl = uploadedUrls[uploadedIndex];
-          uploadedIndex++;
-        }
-
-        for (let i = uploadedIndex; i < uploadedUrls.length; i++) {
-          finalImageUrls.push(uploadedUrls[i]);
-        }
-      }
-
-      let categoryValueForBackend = form.category;
-      const selectedCategoryObject = categories.find(cat => (cat.id || cat._id) === form.category);
-      if (selectedCategoryObject && selectedCategoryObject.title) {
-        categoryValueForBackend = selectedCategoryObject.title;
+    // Step 2: Upload Additional Images
+    if (imageFiles.length > 0) {
+      const formData = new FormData();
+      imageFiles.forEach(file => {
+        formData.append('images', file);
+      });
+      console.log("Uploading additional images...");
+      const uploadRes = await apiService.uploadImages(formData);
+      console.log("Additional images upload response:", uploadRes); // THÊM DÒNG NÀY
+      console.log("Additional images upload data:", uploadRes.data); // THÊM DÒNG NÀY
+      if (uploadRes.data && uploadRes.data.length > 0) {
+        finalImageUrls = [...finalImageUrls, ...uploadRes.data];
+        console.log("Assigned image URLs:", finalImageUrls); // THÊM DÒNG NÀY
       } else {
-        console.warn("Category title not found for ID:", form.category, "Categories state might be empty or invalid.");
+        throw new Error("Failed to upload additional images: No URLs returned.");
       }
-
-
-      const productData = {
-        ...form,
-        category: categoryValueForBackend,
-        price: parseFloat(form.price) || 0,
-        stock: parseInt(form.stock, 10) || 0,
-        discountPercentage: parseFloat(form.discountPercentage) || 0,
-        weight: parseFloat(form.weight) || 0,
-        minimumOrderQuantity: parseInt(form.minimumOrderQuantity, 10) || 1,
-
-        dimensions: {
-          width: parseFloat(form.width) || 0,
-          height: parseFloat(form.height) || 0,
-          depth: parseFloat(form.depth) || 0
-        },
-        meta: {
-          barcode: form.barcode
-        },
-        tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-        thumbnail: finalThumbnailUrl, // Use the processed thumbnail URL
-        images: finalImageUrls,       // Use the processed image URLs
-      };
-
-      const action = editRow ? 'updated' : 'created';
-      if (editRow) {
-        await apiService.updateProduct(editRow.id, productData);
-      } else {
-        await apiService.createProduct(productData);
-      }
-
-      setSnackbar({ open: true, message: `Sản phẩm đã được ${action} thành công!`, severity: 'success' });
-      fetchProducts();
-      handleClose();
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
-      setSnackbar({ open: true, message: `Error: ${errorMessage}`, severity: 'error' });
-    } finally {
-      setLoading(false);
     }
-  };
+
+    // Construct product data
+    const productData = {
+      ...form,
+      price: parseFloat(form.price),
+      stock: parseInt(form.stock),
+      discountPercentage: parseFloat(form.discountPercentage || 0),
+      weight: parseFloat(form.weight || 0),
+      dimensions: {
+        width: parseFloat(form.width || 0),
+        height: parseFloat(form.height || 0),
+        depth: parseFloat(form.depth || 0),
+      },
+      tags: form.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
+      thumbnail: finalThumbnailUrl,
+      images: finalImageUrls,
+      minimumOrderQuantity: parseInt(form.minimumOrderQuantity || 1),
+    };
+    console.log("Product data to be sent:", productData); // THÊM DÒNG NÀY
+
+    // Step 3: Create or Update Product
+    if (editRow) {
+      await apiService.updateProduct(editRow.id, productData);
+      setSnackbar({ open: true, message: 'Product updated successfully!', severity: 'success' });
+    } else {
+      console.log("Creating new product with data:", productData); // THÊM DÒNG NÀY
+      await apiService.createProduct(productData);
+      setSnackbar({ open: true, message: 'Product created successfully!', severity: 'success' });
+    }
+
+    handleClose();
+    fetchProducts();
+  } catch (error) {
+    console.error("Product operation error:", error);
+    setImageUploadError(error.response?.data?.message || error.message || "An unexpected error occurred during product operation.");
+    setSnackbar({ open: true, message: `Operation failed: ${error.response?.data?.message || error.message}`, severity: 'error' });
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDeleteImage = async (urlToDelete, isNewFile) => {
     if (isNewFile) {
@@ -455,24 +458,36 @@ const Products = () => {
     }
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) return;
-
-    setLoading(true);
-    try {
-      await apiService.deleteProduct(id);
-      setSnackbar({ open: true, message: "Sản phẩm đã được xóa thành công", severity: 'success' });
-      fetchProducts();
-    } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message || 'Error deleting product';
-      setSnackbar({ open: true, message: `Error: ${errorMessage}`, severity: 'error' });
-    } finally {
-      setLoading(false);
+const handleDeleteProduct = useCallback(async (deletingId) => {
+    console.log("Attempting to delete product with ID:", deletingId); // <-- THÊM DÒNG NÀY
+    if (!window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) {
+        return;
     }
-  };
+
+    setDeletingId(deletingId);
+    console.log(deletingId)
+    try {
+        await apiService.deleteProduct(deletingId);
+        setSnackbar({ open: true, message: 'Sản phẩm đã được xóa thành công!', severity: 'success' });
+        fetchProducts();
+    } catch (error) {
+        console.error("Error deleting product:", error);
+        const errorMessage = error.response?.data?.message || 'Không thể xóa sản phẩm.';
+        setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+    } finally {
+        setDeletingId(null);
+    }
+}, [fetchProducts]);
 
   // --- RENDER ---
   const columns = [
+  {
+      field: 'id', // Tên trường dữ liệu (phải khớp với thuộc tính 'id' trong mỗi row)
+      headerName: 'ID', // Tiêu đề cột hiển thị trên bảng
+      width: 220, // Chiều rộng của cột
+      headerClassName: 'font-bold', // Tùy chỉnh CSS cho tiêu đề cột
+
+    },
     {
       field: 'thumbnail',
       headerName: 'Image',
@@ -574,6 +589,8 @@ const Products = () => {
                   paginationModel: { pageSize: 10 },
                 },
               }}
+              // getRowId={(row) => row.id} // Đảm bảo DataGrid sử dụng trường 'id' mà bạn đã tạo
+
               sx={{
                 border: 'none',
                 fontFamily: 'inherit',

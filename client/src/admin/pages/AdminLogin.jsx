@@ -1,30 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, Paper, TextField, Typography, Link, CircularProgress, Alert } from '@mui/material'; // Thêm CircularProgress, Alert
-import { useDispatch, useSelector } from 'react-redux'; // Thêm useSelector
-import { doLogin } from '../../store/features/AuthenSlice'; // Đảm bảo đường dẫn đúng
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import { useDispatch } from "react-redux";
+import { doLogin } from "../../store/features/AuthenSlice";
+import { toast } from "react-toastify";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
+import axios from "axios";
+import {
+  Box,
+  Button,
+  Paper,
+  TextField,
+  Typography,
+  CircularProgress,
+  Alert,
+  Link
+} from "@mui/material";
 
 const AdminLogin = () => {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
+
+  const [authError, setAuthError] = useState(null);
+  const [authStatus, setAuthStatus] = useState("idle"); // 'idle' | 'loading' | 'failed'
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '' });
 
-  // Lấy trạng thái đăng nhập, lỗi và cờ đã đăng nhập từ Redux store
-  const authStatus = useSelector((state) => state.authenSlice.status); // Trạng thái: 'idle', 'loading', 'succeeded', 'failed'
-  const authError = useSelector((state) => state.authenSlice.error);     // Thông báo lỗi
-  const isLoggedIn = useSelector((state) => state.authenSlice.isLogin);   // Cờ đã đăng nhập thành công
-
-  // Sử dụng useEffect để chuyển hướng sau khi đăng nhập thành công
-  // Điều này đảm bảo việc chuyển hướng xảy ra sau khi state Redux đã được cập nhật
-  useEffect(() => {
-    if (isLoggedIn && authStatus === 'succeeded') {
-      navigate('/admin'); // Chuyển hướng đến trang admin dashboard
-    }
-  }, [isLoggedIn, authStatus, navigate]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await dispatch(doLogin({ email: form.email, password: form.password }));
+    setAuthStatus("loading");
+    setAuthError(null);
+
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/login", formData);
+      const user = res.data.user;
+      const { token } = user;
+
+      if (!token) {
+        toast.error("Không nhận được accessToken từ server");
+        setAuthStatus("failed");
+        return;
+      }
+
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("username", user.firstName);
+
+      dispatch(doLogin({ email: user.email, role: user.role }));
+
+      toast.success("Đăng nhập thành công!");
+      navigate("/admin"); // Navigate đến trang quản trị
+    } catch (err) {
+      setAuthStatus("failed");
+      if (err.response?.data?.message) {
+        setAuthError("Email hoặc mật khẩu không đúng. Vui lòng nhập lại.");
+      } else {
+        setAuthError("Lỗi kết nối đến server. Vui lòng thử lại sau.");
+      }
+    }
   };
 
   return (
@@ -33,43 +73,55 @@ const AdminLogin = () => {
         <Typography variant="h5" gutterBottom align="center">
           Admin Login
         </Typography>
+
         <form onSubmit={handleSubmit}>
           <TextField
             label="Email"
+            name="email"
             type="email"
             fullWidth
             margin="normal"
             required
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            value={formData.email}
+            onChange={handleChange}
           />
+
           <TextField
             label="Mật khẩu"
+            name="password"
             type="password"
             fullWidth
             margin="normal"
             required
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            value={formData.password}
+            onChange={handleChange}
           />
-          {/* Hiển thị thông báo lỗi nếu đăng nhập thất bại */}
-          {authStatus === 'failed' && authError && (
-            <Alert severity="error" sx={{ mt: 2 }}>{authError}</Alert>
+
+          {authStatus === "failed" && authError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {authError}
+            </Alert>
           )}
+
           <Button
             variant="contained"
             fullWidth
             sx={{ mt: 2 }}
             type="submit"
-            // Vô hiệu hóa nút khi đang tải để tránh gửi nhiều request
-            disabled={authStatus === 'loading'}
+            disabled={authStatus === "loading"}
           >
-            {/* Hiển thị spinner khi đang tải */}
-            {authStatus === 'loading' ? <CircularProgress size={24} color="inherit" /> : 'Đăng nhập'}
+            {authStatus === "loading" ? (
+              <CircularProgress size={24} color="inherit" />
+            ) : (
+              "Đăng nhập"
+            )}
           </Button>
         </form>
+
         <Box mt={2} textAlign="center">
-          <Link href="/admin/forgot">Quên mật khẩu?</Link>
+          <Link component={RouterLink} to="/admin/forgot">
+            Quên mật khẩu?
+          </Link>
         </Box>
       </Paper>
     </Box>
