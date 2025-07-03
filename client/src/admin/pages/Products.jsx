@@ -107,6 +107,7 @@ const Toast = ({ isOpen, message, severity, onClose }) => {
 
 const Products = () => {
   // --- STATE MANAGEMENT ---
+  const [totalProducts, setTotalProducts] = useState(0);
   const [rows, setRows] = useState([]);
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState(new Map());
@@ -122,7 +123,7 @@ const Products = () => {
   const [loading, setLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const [deletingId, setDeletingId] = useState(''); // Để theo dõi sản phẩm đang được xóa
-  
+
   // --- CONSTANTS & CONFIG ---
   const REQUIRED_FIELDS = ['title', 'price', 'category', 'brand', 'stock', 'sku', 'description'];
   const DEFAULT_FORM_STATE = {
@@ -137,30 +138,25 @@ const Products = () => {
   // --- LOGIC HANDLERS ---
 
   // Fetches categories and builds a map for ID-to-Title lookup
+
   const fetchCategories = useCallback(async () => {
+    setLoading(true);
     try {
-      const response = await apiService.getAllCategories();
-      const fetchedCategories = Array.isArray(response) ? response : response.categories || [];
+      const responseData = await apiService.getAllCategories();
+      console.log(responseData)
+
+      const fetchedCategories = Array.isArray(responseData) ? responseData : responseData.categories || [];
 
       setCategories(fetchedCategories.map(cat => ({
         id: cat.id || cat._id,
         title: cat.title,
-        slug: cat.slug,
-        description: cat.description
+        slug: cat.slug
       })));
-
-      const newCategoryMap = new Map();
-      fetchedCategories.forEach(cat => {
-        const categoryId = cat.id || cat._id;
-        if (categoryId) {
-          newCategoryMap.set(categoryId, cat.title);
-        }
-      });
-      setCategoryMap(newCategoryMap);
-
     } catch (error) {
-      console.error('Error fetching categories for form:', error.response?.data?.message || error.message);
-      setSnackbar({ open: true, message: `Error fetching categories: ${error.response?.data?.message || error.message}`, severity: 'error' });
+      setSnackbar({ open: true, message: `Error loading categories: ${error.response?.data?.message || error.message}`, severity: 'error' });
+      setCategories([]);
+    } finally {
+      setLoading(false);
     }
   }, []);
 
@@ -250,7 +246,7 @@ const Products = () => {
         sku: row.sku || '',
         stock: row.stock || '',
         description: row.description || '',
-        category: row.category?._id || row.category?.id || row.category || '',
+        category: row.category || '',
         tags: row.tags?.join(', ') || '',
         discountPercentage: row.discountPercentage || '',
         weight: row.weight || '',
@@ -327,92 +323,92 @@ const Products = () => {
     setImageFiles(prev => [...prev, ...selectedFiles]);
   };
 
-const handleSubmit = async () => {
-  if (!validateForm()) {
-    setSnackbar({ open: true, message: 'Please fill in all required fields and correct the errors.', severity: 'error' });
-    return;
-  }
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      setSnackbar({ open: true, message: 'Please fill in all required fields and correct the errors.', severity: 'error' });
+      return;
+    }
 
-  setLoading(true);
-  setImageUploadError('');
+    setLoading(true);
+    setImageUploadError('');
 
-  try {
-    let finalThumbnailUrl = thumbnailUrl;
-    let finalImageUrls = [...imageUrls];
+    try {
+      let finalThumbnailUrl = thumbnailUrl;
+      let finalImageUrls = [...imageUrls];
 
-    // Step 1: Upload Thumbnail
-    if (thumbnailFile) {
-      const formData = new FormData();
-      formData.append('images', thumbnailFile);
-      console.log("Uploading thumbnail...");
-      const uploadRes = await apiService.uploadImages(formData);
-      console.log("Thumbnail upload response:", uploadRes); // THÊM DÒNG NÀY
-      console.log("Thumbnail upload data:", uploadRes.data); // THÊM DÒNG NÀY
-      if (uploadRes.data && uploadRes.data.length > 0) {
-        finalThumbnailUrl = uploadRes.data[0];
-        console.log("Assigned thumbnail URL:", finalThumbnailUrl); // THÊM DÒNG NÀY
-      } else {
-        throw new Error("Failed to upload thumbnail: No URLs returned.");
+      // Step 1: Upload Thumbnail
+      if (thumbnailFile) {
+        const formData = new FormData();
+        formData.append('images', thumbnailFile);
+        console.log("Uploading thumbnail...");
+        const uploadRes = await apiService.uploadImages(formData);
+        console.log("Thumbnail upload response:", uploadRes); // THÊM DÒNG NÀY
+        console.log("Thumbnail upload data:", uploadRes.data); // THÊM DÒNG NÀY
+        if (uploadRes.data && uploadRes.data.length > 0) {
+          finalThumbnailUrl = uploadRes.data[0];
+          console.log("Assigned thumbnail URL:", finalThumbnailUrl); // THÊM DÒNG NÀY
+        } else {
+          throw new Error("Failed to upload thumbnail: No URLs returned.");
+        }
       }
-    }
 
-    // Step 2: Upload Additional Images
-    if (imageFiles.length > 0) {
-      const formData = new FormData();
-      imageFiles.forEach(file => {
-        formData.append('images', file);
-      });
-      console.log("Uploading additional images...");
-      const uploadRes = await apiService.uploadImages(formData);
-      console.log("Additional images upload response:", uploadRes); // THÊM DÒNG NÀY
-      console.log("Additional images upload data:", uploadRes.data); // THÊM DÒNG NÀY
-      if (uploadRes.data && uploadRes.data.length > 0) {
-        finalImageUrls = [...finalImageUrls, ...uploadRes.data];
-        console.log("Assigned image URLs:", finalImageUrls); // THÊM DÒNG NÀY
-      } else {
-        throw new Error("Failed to upload additional images: No URLs returned.");
+      // Step 2: Upload Additional Images
+      if (imageFiles.length > 0) {
+        const formData = new FormData();
+        imageFiles.forEach(file => {
+          formData.append('images', file);
+        });
+        console.log("Uploading additional images...");
+        const uploadRes = await apiService.uploadImages(formData);
+        console.log("Additional images upload response:", uploadRes); // THÊM DÒNG NÀY
+        console.log("Additional images upload data:", uploadRes.data); // THÊM DÒNG NÀY
+        if (uploadRes.data && uploadRes.data.length > 0) {
+          finalImageUrls = [...finalImageUrls, ...uploadRes.data];
+          console.log("Assigned image URLs:", finalImageUrls); // THÊM DÒNG NÀY
+        } else {
+          throw new Error("Failed to upload additional images: No URLs returned.");
+        }
       }
+
+      // Construct product data
+      const productData = {
+        ...form,
+        price: parseFloat(form.price),
+        stock: parseInt(form.stock),
+        discountPercentage: parseFloat(form.discountPercentage || 0),
+        weight: parseFloat(form.weight || 0),
+        dimensions: {
+          width: parseFloat(form.width || 0),
+          height: parseFloat(form.height || 0),
+          depth: parseFloat(form.depth || 0),
+        },
+        tags: form.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
+        thumbnail: finalThumbnailUrl,
+        images: finalImageUrls,
+        minimumOrderQuantity: parseInt(form.minimumOrderQuantity || 1),
+      };
+      console.log("Product data to be sent:", productData); // THÊM DÒNG NÀY
+
+      // Step 3: Create or Update Product
+      if (editRow) {
+        await apiService.updateProduct(editRow.id, productData);
+        setSnackbar({ open: true, message: 'Product updated successfully!', severity: 'success' });
+      } else {
+        console.log("Creating new product with data:", productData); // THÊM DÒNG NÀY
+        await apiService.createProduct(productData);
+        setSnackbar({ open: true, message: 'Product created successfully!', severity: 'success' });
+      }
+
+      handleClose();
+      fetchProducts();
+    } catch (error) {
+      console.error("Product operation error:", error);
+      setImageUploadError(error.response?.data?.message || error.message || "An unexpected error occurred during product operation.");
+      setSnackbar({ open: true, message: `Operation failed: ${error.response?.data?.message || error.message}`, severity: 'error' });
+    } finally {
+      setLoading(false);
     }
-
-    // Construct product data
-    const productData = {
-      ...form,
-      price: parseFloat(form.price),
-      stock: parseInt(form.stock),
-      discountPercentage: parseFloat(form.discountPercentage || 0),
-      weight: parseFloat(form.weight || 0),
-      dimensions: {
-        width: parseFloat(form.width || 0),
-        height: parseFloat(form.height || 0),
-        depth: parseFloat(form.depth || 0),
-      },
-      tags: form.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
-      thumbnail: finalThumbnailUrl,
-      images: finalImageUrls,
-      minimumOrderQuantity: parseInt(form.minimumOrderQuantity || 1),
-    };
-    console.log("Product data to be sent:", productData); // THÊM DÒNG NÀY
-
-    // Step 3: Create or Update Product
-    if (editRow) {
-      await apiService.updateProduct(editRow.id, productData);
-      setSnackbar({ open: true, message: 'Product updated successfully!', severity: 'success' });
-    } else {
-      console.log("Creating new product with data:", productData); // THÊM DÒNG NÀY
-      await apiService.createProduct(productData);
-      setSnackbar({ open: true, message: 'Product created successfully!', severity: 'success' });
-    }
-
-    handleClose();
-    fetchProducts();
-  } catch (error) {
-    console.error("Product operation error:", error);
-    setImageUploadError(error.response?.data?.message || error.message || "An unexpected error occurred during product operation.");
-    setSnackbar({ open: true, message: `Operation failed: ${error.response?.data?.message || error.message}`, severity: 'error' });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleDeleteImage = async (urlToDelete, isNewFile) => {
     if (isNewFile) {
@@ -458,30 +454,30 @@ const handleSubmit = async () => {
     }
   };
 
-const handleDeleteProduct = useCallback(async (deletingId) => {
-    console.log("Attempting to delete product with ID:", deletingId); // <-- THÊM DÒNG NÀY
+  const handleDeleteProduct = useCallback(async (id) => {
+    console.log("Attempting to delete product with ID:", id); // <-- THÊM DÒNG NÀY
     if (!window.confirm('Bạn có chắc chắn muốn xóa sản phẩm này không?')) {
-        return;
+      return;
     }
 
-    setDeletingId(deletingId);
-    console.log(deletingId)
+    setDeletingId(id);
+    console.log(id)
     try {
-        await apiService.deleteProduct(deletingId);
-        setSnackbar({ open: true, message: 'Sản phẩm đã được xóa thành công!', severity: 'success' });
-        fetchProducts();
+      await apiService.deleteProduct(id);
+      setSnackbar({ open: true, message: 'Sản phẩm đã được xóa thành công!', severity: 'success' });
+      fetchProducts();
     } catch (error) {
-        console.error("Error deleting product:", error);
-        const errorMessage = error.response?.data?.message || 'Không thể xóa sản phẩm.';
-        setSnackbar({ open: true, message: errorMessage, severity: 'error' });
+      console.error("Error deleting product:", error);
+      const errorMessage = error.response?.data?.message || 'Không thể xóa sản phẩm.';
+      setSnackbar({ open: true, message: errorMessage, severity: 'error' });
     } finally {
-        setDeletingId(null);
+      setDeletingId(null);
     }
-}, [fetchProducts]);
+  }, [fetchProducts]);
 
   // --- RENDER ---
   const columns = [
-  {
+    {
       field: 'id', // Tên trường dữ liệu (phải khớp với thuộc tính 'id' trong mỗi row)
       headerName: 'ID', // Tiêu đề cột hiển thị trên bảng
       width: 220, // Chiều rộng của cột
@@ -544,14 +540,14 @@ const handleDeleteProduct = useCallback(async (deletingId) => {
         <div className="flex gap-2">
           <button
             onClick={() => handleOpen(row)}
-            className="flex items-center justify-center p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900 transition-colors"
+            className="flex items-center justify-center p-2 rounded-lg text-red-700 hover:text-red-800 transition-colors"
             title="Edit Product"
           >
             <PencilSquareIcon className="h-5 w-5" />
           </button>
           <button
             onClick={() => handleDeleteProduct(row.id)}
-            className="flex items-center justify-center p-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-red-100 hover:text-red-700 transition-colors"
+            className="flex items-center justify-center p-2 rounded-lg text-red-700 hover:text-red-800 transition-colors"
             title="Delete Product"
           >
             <TrashIcon className="h-5 w-5" />
@@ -567,12 +563,12 @@ const handleDeleteProduct = useCallback(async (deletingId) => {
       <div className="max-w-7xl mx-auto"> {/* Added max-w-7xl and mx-auto here */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Quản lý sản phẩm</h1>
-            <p className="text-gray-600 mt-1">Tổng cộng {rows.length} sản phẩm.</p>
+            <h1 className="text-2xl font-bold text-gray-900">Product Management</h1>
+            <p className="text-gray-600 mt-1">Total product: {rows.length}</p>
           </div>
           <Button onClick={() => handleOpen()}>
             <PlusIcon className="h-5 w-5 mr-2" />
-            Thêm sản phẩm
+            Add new
           </Button>
         </div>
 

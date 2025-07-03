@@ -7,7 +7,7 @@ import "slick-carousel/slick/slick-theme.css";
 import Slider from "react-slick";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../../../store/features/CartSlice";
-import { addWishList,deleteWishListItem } from "../../../store/features/WishListSlice";
+import { addWishList, deleteWishListItem } from "../../../store/features/WishListSlice";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { fetchWishList } from "../../../store/features/WishListSlice";
@@ -109,43 +109,43 @@ const Smartwatch = () => {
   const wishItems = useSelector((state) => state.WishListSlice.wishItems);
 
 
-   const handleAddToCart = (product) => {
-      if (isLogin) {
-        dispatch(
-          addToCart({
-            productId: product.id,
-            quantity: 1,
-          })
-        ).then(() => {
-          dispatch(fetchCartAPI()); // 👈 cập nhật giỏ hàng
-        });
-        toast.success("Đã thêm sản phẩm vào giỏ hàng");
-      } else {
-        navigate("/login");
-      }
-    };
-  
-  
-    const isInWishList = (productId) => {
-      return wishItems.some(
-        (item) => item._id === productId || item.id === productId
-      );
-    };
-  
-    const handleAddToWishList = (product) => {
-      if (!isLogin) return navigate("/login");
-  
-      const isExist = isInWishList(product.id);
-      if (isExist) {
-        dispatch(deleteWishListItem(product.id)).then(() => {
-          dispatch(fetchWishList()); // Cập nhật lại danh sách yêu thích sau khi xoá
-        });
-        toast.info("Đã xoá khỏi danh sách yêu thích");
-      } else {
-        dispatch(addWishList({ ...product }));
-        toast.success("Đã thêm sản phẩm vào yêu thích");
-      }
-    };
+  const handleAddToCart = (product) => {
+    if (isLogin) {
+      dispatch(
+        addToCart({
+          productId: product.id,
+          quantity: 1,
+        })
+      ).then(() => {
+        dispatch(fetchCartAPI()); // 👈 cập nhật giỏ hàng
+      });
+      toast.success("Đã thêm sản phẩm vào giỏ hàng");
+    } else {
+      navigate("/login");
+    }
+  };
+
+
+  const isInWishList = (productId) => {
+    return wishItems.some(
+      (item) => item._id === productId || item.id === productId
+    );
+  };
+
+  const handleAddToWishList = (product) => {
+    if (!isLogin) return navigate("/login");
+
+    const isExist = isInWishList(product.id);
+    if (isExist) {
+      dispatch(deleteWishListItem(product.id)).then(() => {
+        dispatch(fetchWishList()); // Cập nhật lại danh sách yêu thích sau khi xoá
+      });
+      toast.info("Đã xoá khỏi danh sách yêu thích");
+    } else {
+      dispatch(addWishList({ ...product }));
+      toast.success("Đã thêm sản phẩm vào yêu thích");
+    }
+  };
 
   const fetchDataProduct = async () => {
     try {
@@ -253,9 +253,6 @@ const Smartwatch = () => {
                   {products[7]?.description.substring(0, 100)}...
                 </p>
               </div>
-              <div className="absolute bottom-4 right-4 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                BÁN CHẠY NHẤT
-              </div>
             </div>
           </div>
         )}
@@ -319,11 +316,10 @@ const Smartwatch = () => {
                         <li>
                           <button onClick={() => handleAddToWishList(item)}>
                             <i
-                              className={`${
-                                isInWishList(item.id)
+                              className={`${isInWishList(item.id)
                                   ? "fas fa-heart text-red-600"
                                   : "far fa-heart text-gray-700"
-                              } hover:scale-110 transition-all duration-200`}
+                                } hover:scale-110 transition-all duration-200`}
                             ></i>
                           </button>
                         </li>

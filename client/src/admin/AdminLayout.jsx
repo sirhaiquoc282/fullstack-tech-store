@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import Sidebar from './components/Sidebar'; // Corrected path assuming Sidebar is in 'components/Sidebar/Sidebar.jsx'
+import Sidebar from './components/Sidebar';
 import { Box, Toolbar, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 
@@ -33,6 +33,23 @@ const AdminLayout = () => {
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
 
+      {/* Conditional IconButton for mobile to open sidebar */}
+      {isMobile && (
+        <Toolbar sx={{ position: 'fixed', top: 0, left: 0, zIndex: theme.zIndex.drawer + 2, width: '100%', backgroundColor: '#f6f8fa', boxShadow: theme.shadows[1], pr: '24px !important' }}>
+          <IconButton
+            color="inherit"
+            aria-label="open drawer"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2, display: { md: 'none' } }} // Show only on small screens
+          >
+            <MenuIcon />
+          </IconButton>
+          {/* You might want a title or logo here */}
+          <Box sx={{ flexGrow: 1 }} />
+        </Toolbar>
+      )}
+
       <Sidebar
         mobileOpen={mobileOpen}
         handleDrawerToggle={handleDrawerToggle}
@@ -45,15 +62,19 @@ const AdminLayout = () => {
           flexGrow: 1,
           backgroundColor: '#f6f8fa',
           minHeight: '100vh',
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          pt: { xs: 3, md: 3 },
+          width: '100%', // Outlet always takes full width
+          // Remove ml: { sm: `${drawerWidth}px` } as we want it to overlay, not push
+          pt: { xs: 8, md: 3 }, // Adjust padding top to account for fixed toolbar on mobile
           pl: { xs: 2, md: 2 },
           pr: 3,
           pb: 3,
         }}
       >
-        {!isMobile && <Toolbar />}
+        {/*
+          No need for this Toolbar as it was meant for pushing content.
+          Instead, we added a fixed Toolbar for the menu icon on mobile.
+          <Toolbar />
+        */}
         <Outlet />
       </Box>
     </Box>

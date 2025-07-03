@@ -53,29 +53,31 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
   const dispatch = useDispatch();
 
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Vẫn cần isMobile để điều khiển Drawer tạm thời
+  // isMobile sẽ đúng khi màn hình nhỏ hơn hoặc bằng breakpoint 'md' (ví dụ: 960px)
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleLogout = () => {
     dispatch(doLogout());
     navigate('/admin/login');
-    if (isMobile) {
+    if (isMobile) { // Đóng sidebar nếu đang ở chế độ mobile
       handleDrawerToggle();
     }
   };
 
   const drawerContent = (
     <Box className="flex flex-col h-full">
+      {/* Toolbar của Sidebar: Chỉ hiện nút đóng trên mobile */}
       <Toolbar className="bg-red-600 text-white min-h-[64px] border-b border-white/[0.2] flex justify-between items-center">
         <Typography variant="h6" noWrap component="div" className="font-bold text-xl">
           Admin Panel
         </Typography>
-        {isMobile && ( // Nút đóng chỉ hiển thị trên mobile
+        {isMobile && ( // Nút đóng chỉ hiển thị trên mobile (<= md)
           <IconButton
             color="inherit"
             aria-label="close drawer"
             edge="end"
             onClick={handleDrawerToggle}
-            className="md:hidden" // Responsive class
+          // Không cần className="md:hidden" vì isMobile đã kiểm soát.
           >
             <CloseIcon />
           </IconButton>
@@ -91,7 +93,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
               key={path}
               onClick={() => {
                 navigate(path);
-                if (isMobile) {
+                if (isMobile) { // Đóng sidebar nếu đang ở chế độ mobile
                   handleDrawerToggle();
                 }
               }}
@@ -120,7 +122,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
                   handleLogout();
                 } else {
                   navigate(path);
-                  if (isMobile) {
+                  if (isMobile) { // Đóng sidebar nếu đang ở chế độ mobile
                     handleDrawerToggle();
                   }
                 }
@@ -144,47 +146,42 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle, drawerWidth }) => {
   return (
     <Box
       component="nav"
-      className="flex-shrink-0" // md:w-[260px] sẽ nằm trong global CSS hoặc theme
-      sx={{ width: { md: drawerWidth } }} // Giữ lại sx này để Drawer biết width cố định của nó trên desktop
-      aria-label="mailbox folders"
+      sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+      aria-label="admin navigation" // Cải thiện accessiblity
     >
+      {/* Drawer tạm thời (Temporary Drawer) - Cho màn hình nhỏ */}
       <Drawer
         variant="temporary"
         open={mobileOpen}
         onClose={handleDrawerToggle}
-        ModalProps={{ keepMounted: true }}
+        ModalProps={{ keepMounted: true }} // Giúp hiệu suất tốt hơn khi đóng/mở
         sx={{
-          // display responsive classes
-          // Loại bỏ: display: { xs: 'block', md: 'none' },
+          display: { xs: 'block', md: 'none' }, // HIỂN THỊ CHỈ TRÊN MÀN HÌNH NHỎ (xs, sm)
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
-            width: drawerWidth, // Width vẫn cần cho Drawer Paper
+            width: drawerWidth,
             backgroundColor: '#fff',
-            boxShadow: '0px 0px 15px rgba(0,0,0,0.05)',
+            boxShadow: theme.shadows[3], // Tăng shadow để rõ ràng hơn khi overlay
           },
         }}
-        // Add responsive display class directly to Drawer if needed for a smoother transition
-        className={`${isMobile ? 'block' : 'hidden'} md:block`} // Example: block on mobile, block on md and up
       >
         {drawerContent}
       </Drawer>
 
+      {/* Drawer cố định (Permanent Drawer) - Cho màn hình lớn */}
       <Drawer
         variant="permanent"
+        open // Luôn mở trên màn hình lớn
         sx={{
-          // display responsive classes
-          // Loại bỏ: display: { xs: 'none', md: 'block' },
+          display: { xs: 'none', md: 'block' }, // HIỂN THỊ CHỈ TRÊN MÀN HÌNH LỚN (md và lớn hơn)
           '& .MuiDrawer-paper': {
-            width: drawerWidth, // Width vẫn cần cho Drawer Paper
+            width: drawerWidth,
             boxSizing: 'border-box',
             backgroundColor: '#fff',
-            boxShadow: '0px 0px 15px rgba(0,0,0,0.05)',
+            boxShadow: theme.shadows[1],
             borderRight: '1px solid #e0e0e0',
           },
         }}
-        open
-        // Add responsive display class directly to Drawer
-        className={`${isMobile ? 'hidden' : 'block'} md:block`} // Example: hidden on mobile, block on md and up
       >
         {drawerContent}
       </Drawer>

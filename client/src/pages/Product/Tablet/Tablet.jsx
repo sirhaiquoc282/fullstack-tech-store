@@ -254,9 +254,6 @@ const Tablet = () => {
                   {products[1]?.description.substring(0, 100)}...
                 </p>
               </div>
-              <div className="absolute bottom-4 right-4 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                BÁN CHẠY NHẤT
-              </div>
             </div>
           </div>
         )}
@@ -320,11 +317,10 @@ const Tablet = () => {
                         <li>
                           <button onClick={() => handleAddToWishList(item)}>
                             <i
-                              className={`${
-                                isInWishList(item.id)
+                              className={`${isInWishList(item.id)
                                   ? "fas fa-heart text-red-600"
                                   : "far fa-heart text-gray-700"
-                              } hover:scale-110 transition-all duration-200`}
+                                } hover:scale-110 transition-all duration-200`}
                             ></i>
                           </button>
                         </li>

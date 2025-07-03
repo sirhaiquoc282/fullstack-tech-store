@@ -70,6 +70,10 @@ const getAllProducts = asyncHandler(async (req, res) => {
     try {
         let findQuery = {};
         const queryConditions = {};
+
+        // ... (Giữ nguyên các logic lọc tìm kiếm, category, brand, price hiện có)
+        // Các phần này không thay đổi vì chúng áp dụng cho cả việc có giới hạn hay không
+
         if (req.query.q) {
             const keyword = req.query.q;
             const orConditions = [
@@ -89,7 +93,6 @@ const getAllProducts = asyncHandler(async (req, res) => {
                 const categoryIds = matchingCategories.map(cat => cat._id);
                 orConditions.push({ category: { $in: categoryIds } });
             }
-
             queryConditions.$or = orConditions;
         }
 
@@ -99,9 +102,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
                 res.status(400);
                 throw new Error("Invalid Category ID format provided in 'category' query parameter.");
             }
-
             const specificCategory = await Category.findById(categoryId).select('_id');
-
             if (specificCategory) {
                 if (queryConditions.$or) {
                     queryConditions.$and = queryConditions.$and || [];
@@ -110,12 +111,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
                     queryConditions.category = specificCategory._id;
                 }
             } else {
-                res.json({
-                    products: [],
-                    total: 0,
-                    page: page,
-                    limit: limit
-                });
+                res.json({ products: [], total: 0, page: 1, limit: 0 }); // Trả về 0 sản phẩm nếu category không tồn tại
                 return;
             }
         }
@@ -133,9 +129,13 @@ const getAllProducts = asyncHandler(async (req, res) => {
 
         findQuery = queryConditions;
 
+        // Đếm tổng số tài liệu khớp với điều kiện tìm kiếm (trước khi áp dụng phân trang)
+        const totalDocuments = await Product.countDocuments(findQuery);
+
         let query = Product.find(findQuery);
 
-        query = query.populate('category', 'title slug');
+        query = query.populate('category', 'title slug'); // Đảm bảo category được populate để hiển thị tên
+
         if (req.query.sortBy) {
             let sortOrder = req.query.order === 'desc' ? '-' : '';
             const sortByField = req.query.sortBy;
@@ -152,19 +152,24 @@ const getAllProducts = asyncHandler(async (req, res) => {
         }
 
         const page = parseInt(req.query.page, 10) || 1;
-        const limit = parseInt(req.query.limit, 10) || 30;
-        const skip = (page - 1) * limit;
+        let limit = parseInt(req.query.limit, 10); // Lấy giá trị limit trực tiếp, không đặt mặc định 30 ở đây
 
-        const totalDocuments = await Product.countDocuments(findQuery);
-
-        if (skip >= totalDocuments && page > 1) {
-            res.status(404);
-            throw new Error("This page does not exist or has no products.");
+        // --- BẮT ĐẦU ĐIỀU CHỈNH ĐỂ BỎ GIỚI HẠN ---
+        // Nếu limit là 0 hoặc không phải là số hợp lệ (NaN), nghĩa là muốn lấy TẤT CẢ
+        if (isNaN(limit) || limit === 0) {
+            // Không áp dụng .skip() và .limit(), để Mongoose tự động lấy tất cả
+            // Tuy nhiên, chúng ta đặt lại biến 'limit' cho payload phản hồi
+            limit = totalDocuments > 0 ? totalDocuments : 1; // Nếu không có sản phẩm nào, đặt limit là 1 để tránh chia cho 0 nếu có tính toán page
+        } else {
+            // Áp dụng skip và limit nếu có giá trị limit hợp lệ khác 0
+            const skip = (page - 1) * limit;
+            if (skip >= totalDocuments && page > 1) {
+                res.status(404);
+                throw new Error("This page does not exist or has no products.");
+            }
+            query = query.skip(skip).limit(limit);
         }
-
-        query = query.skip(skip).limit(limit);
-
-
+        // --- KẾT THÚC ĐIỀU CHỈNH ĐỂ BỎ GIỚI HẠN ---
 
         const products = await query;
 
@@ -172,7 +177,7 @@ const getAllProducts = asyncHandler(async (req, res) => {
             products: products.map(formatProductForResponse),
             total: totalDocuments,
             page: page,
-            limit: limit
+            limit: limit // `limit` ở đây sẽ là tổng số sản phẩm nếu request all, hoặc giá trị limit cụ thể
         });
 
     } catch (error) {
@@ -352,7 +357,7 @@ const createProduct = asyncHandler(async (req, res) => {
         req.body.meta.updatedAt = new Date();
 
         if (req.body.category) {
-            const category = await Category.findOne({ title: req.body.category });
+            const category = await Category.findOne({ _id: req.body.category });
             if (!category) {
                 res.status(400);
                 throw new Error("Invalid category title provided.");
@@ -386,7 +391,7 @@ const updateProduct = asyncHandler(async (req, res) => {
 
 
         if (req.body.category) {
-            const category = await Category.findOne({ title: req.body.category });
+            const category = await Category.findOne({ _id: req.body.category });
             if (!category) {
                 res.status(400);
                 throw new Error("Invalid category title provided.");
